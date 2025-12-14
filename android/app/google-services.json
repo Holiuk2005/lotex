@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "823233113152",
+    "project_id": "lotex-4890a",
+    "storage_bucket": "lotex-4890a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:823233113152:android:3a10dcde54334bd2b883a5",
+        "android_client_info": {
+          "package_name": "com.example.lotex"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHlPOLUuBt__ppa-TQtizFCjwNcQU0DNQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
