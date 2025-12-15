@@ -1,11 +1,11 @@
-import 'dart:io';
+import 'dart:io'; // Потрібен для File
+import 'package:flutter/foundation.dart'; // Потрібен для kIsWeb
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
-// import '../../../../core/theme/app_text_styles.dart'; // unused
 import '../providers/create_auction_controller.dart';
 import '../widgets/lotex_input.dart';
 
@@ -25,6 +25,7 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
   
   DateTime? _selectedDate;
   XFile? _pickedImage;
+  // Ми прибрали _pickedImageBytes, бо він тут не потрібен для відображення
 
   Future<void> _pickDateTime() async {
     final now = DateTime.now();
@@ -52,7 +53,9 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final image = await picker.pickImage(source: ImageSource.gallery);
+    
     if (image != null) {
+      // Тут ми просто зберігаємо файл, не читаючи байти (швидше)
       setState(() {
         _pickedImage = image;
       });
@@ -75,7 +78,7 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
         description: _descController.text,
         startPrice: double.parse(_startPriceController.text),
         endDate: _selectedDate!,
-        image: File(_pickedImage!.path),
+        image: _pickedImage!,
       );
     }
   }
@@ -116,11 +119,21 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
                     color: Colors.grey[100],
                     borderRadius: BorderRadius.circular(16),
                   ),
+                  // --- ОСЬ ТУТ ГОЛОВНЕ ВИПРАВЛЕННЯ ---
                   child: _pickedImage != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(16),
-                          child: Image.file(File(_pickedImage!.path), fit: BoxFit.cover),
+                          child: kIsWeb
+                              ? Image.network(
+                                  _pickedImage!.path, // На Web path працює як посилання
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.file(
+                                  File(_pickedImage!.path), // На телефоні це шлях до файлу
+                                  fit: BoxFit.cover,
+                                ),
                         )
+                  // ------------------------------------
                       : const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -143,35 +156,55 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
                 hint: "Деталі...",
                 maxLines: 4,
                 controller: _descController,
+                validator: (v) => v!.isEmpty ? "Введіть опис" : null,
               ),
               const SizedBox(height: 16),
               LotexInput(
-                label: "Стартова ціна",
-                hint: "₴ 0",
-                keyboardType: TextInputType.number,
+                label: "Початкова ціна",
+                hint: "0.0",
                 controller: _startPriceController,
-                validator: (v) => v!.isEmpty ? "Вкажіть ціну" : null,
+                keyboardType: TextInputType.number,
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Введіть початкову ціну';
+                  final parsed = double.tryParse(v.replaceAll(',', '.'));
+                  if (parsed == null) return 'Некоректна ціна';
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
-              LotexInput(
-                label: "Дата завершення",
-                hint: "Оберіть...",
-                readOnly: true,
+              TextFormField(
                 controller: _dateController,
+                readOnly: true,
+                decoration: const InputDecoration(
+                    labelText: 'Дата завершення',
+                    suffixIcon: Icon(Icons.calendar_today),
+                ),
                 onTap: _pickDateTime,
-                suffixIcon: const Icon(Icons.calendar_today),
+                validator: (v) => v == null || v.isEmpty ? 'Оберіть дату' : null,
               ),
               const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: isLoading ? null : _submit,
-                child: isLoading 
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white)) 
-                  : const Text("ОПУБЛІКУВАТИ"),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: isLoading ? null : _submit,
+                  child: isLoading 
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) 
+                    : const Text('СТВОРИТИ ЛОТ'),
+                ),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descController.dispose();
+    _startPriceController.dispose();
+    _dateController.dispose();
+    super.dispose();
   }
 }

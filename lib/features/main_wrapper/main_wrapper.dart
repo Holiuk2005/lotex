@@ -18,7 +18,7 @@ class MainWrapper extends StatelessWidget {
           initialLocation: index == navigationShell.currentIndex
         ),
         backgroundColor: Colors.white,
-        indicatorColor: AppColors.primary500.withOpacity(0.2),
+        indicatorColor: AppColors.primary500.withAlpha((0.2 * 255).round()),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Головна', selectedIcon: Icon(Icons.home)),
           NavigationDestination(icon: Icon(Icons.add_circle_outline), label: 'Створити', selectedIcon: Icon(Icons.add_circle)),

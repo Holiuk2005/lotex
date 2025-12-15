@@ -2,15 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'firebase_options.dart'; 
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/app_colors.dart';
 import 'features/auction/presentation/providers/auction_list_provider.dart';
 import 'features/auction/presentation/widgets/auction_card.dart';
-import 'core/theme/app_colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+
+  if (kIsWeb) {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  } else {
+    await Firebase.initializeApp();
+  }
+
   runApp(const ProviderScope(child: LotexApp()));
 }
 
@@ -29,7 +37,6 @@ class LotexApp extends ConsumerWidget {
   }
 }
 
-// HomeScreen в тому ж файлі для зручності (або винеси в features/auction/presentation/pages/home_screen.dart)
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
