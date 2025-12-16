@@ -12,6 +12,11 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
+# ... ваші існуючі пакети ...
+  google_sign_in: ^6.1.6
+  sign_in_with_apple: ^5.0.0
+  crypto: ^3.0.3 # Потрібно для Apple Sign In (генерація nonce)
+
   # --- Саме ця версія потрібна твоєму Flutter ---
   intl: 0.20.2
 

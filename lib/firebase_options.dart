@@ -37,11 +37,12 @@ class DefaultFirebaseOptions {
 
   // ОСЬ ТУТ ВСТАВТЕ ДАНІ З FIREBASE CONSOLE:
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: "AIzaSyCXIqFFRDcoggp42HumK_oOGc8cAbpGVs0", // Наприклад: 'AIzaSyDoc...'
-    appId: "1:823233113152:web:6565f42bcee8b4acb883a5",   // Наприклад: '1:123456789:web:abcdef...'
-    messagingSenderId: "823233113152", // Наприклад: '123456789'
-    projectId: "lotex-4890a", // Наприклад: 'lotex-app'
-    authDomain: "lotex-4890a.firebaseapp.com", // Наприклад: 'lotex-app.firebaseapp.com'
-    storageBucket: "lotex-4890a.firebasestorage.app", // Наприклад: 'lotex-app.appspot.com'
+  apiKey: "AIzaSyCXIqFFRDcoggp42HumK_oOGc8cAbpGVs0",
+  authDomain: "lotex-4890a.firebaseapp.com",
+  projectId: "lotex-4890a",
+  storageBucket: "lotex-4890a.firebasestorage.app",
+  messagingSenderId: "823233113152",
+  appId: "1:823233113152:web:6565f42bcee8b4acb883a5",
+  measurementId: "G-NP3NFWETVL"
   );
 }

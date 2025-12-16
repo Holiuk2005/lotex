@@ -1,5 +1,11 @@
+import 'dart:convert'; // Для генерації nonce (Apple)
+import 'dart:math';    // Для генерації nonce (Apple)
+import 'package:crypto/crypto.dart'; // Для хешування nonce (Apple)
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart'; // Для перевірки kIsWeb
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../../domain/entities/user_entity.dart';
 
 final authRepositoryProvider = Provider((ref) => AuthRepository(FirebaseAuth.instance));
@@ -7,20 +13,25 @@ final authRepositoryProvider = Provider((ref) => AuthRepository(FirebaseAuth.ins
 class AuthRepository {
   final FirebaseAuth _auth;
 
+  // --- НАЛАШТУВАННЯ GOOGLE SIGN IN ---
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    // Використовуємо ваш Client ID тільки для Web
+    clientId: kIsWeb 
+        ? '823233113152-iktaaoltbruf2o3uhmu0d3rjp80qnju1.apps.googleusercontent.com' 
+        : null,
+  );
+
   AuthRepository(this._auth);
 
-  // 1. Потік стану авторизації (для AppRouter)
+  // 1. Потік стану авторизації
   Stream<UserEntity?> get authStateChanges {
-    // Перетворюємо Firebase User на наш UserEntity
     return _auth.authStateChanges().map((user) {
-      if (user == null) {
-        return null;
-      }
+      if (user == null) return null;
       return UserEntity.fromFirebaseUser(user);
     });
   }
 
-  // 2. Реєстрація
+  // 2. Реєстрація (Email)
   Future<UserEntity> signUp({required String email, required String password}) async {
     final userCredential = await _auth.createUserWithEmailAndPassword(
       email: email,
@@ -30,7 +41,7 @@ class AuthRepository {
     return UserEntity.fromFirebaseUser(userCredential.user!);
   }
 
-  // 3. Вхід
+  // 3. Вхід (Email)
   Future<UserEntity> signIn({required String email, required String password}) async {
     final userCredential = await _auth.signInWithEmailAndPassword(
       email: email,
@@ -40,14 +51,92 @@ class AuthRepository {
     return UserEntity.fromFirebaseUser(userCredential.user!);
   }
 
-  // 4. Вихід
+  // --- 4. Вхід через GOOGLE ---
+  Future<UserEntity> signInWithGoogle() async {
+    try {
+      // Запуск вікна авторизації
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      
+      if (googleUser == null) {
+        throw Exception('Вхід скасовано користувачем');
+      }
+
+      // Отримання токенів
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      // Створення credential для Firebase
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Вхід у Firebase
+      final userCredential = await _auth.signInWithCredential(credential);
+      
+      if (userCredential.user == null) throw Exception('Помилка Google входу');
+      return UserEntity.fromFirebaseUser(userCredential.user!);
+    } catch (e) {
+      throw Exception('Помилка Google Sign In: $e');
+    }
+  }
+
+  // --- 5. Вхід через APPLE ---
+  Future<UserEntity> signInWithApple() async {
+    try {
+      final rawNonce = _generateNonce();
+      final nonce = _sha256ofString(rawNonce);
+
+      // Запит до Apple
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: nonce,
+      );
+
+      // Створення credential для Firebase
+      final OAuthCredential credential = OAuthProvider("apple.com").credential(
+        idToken: appleCredential.identityToken,
+        accessToken: appleCredential.authorizationCode,
+        rawNonce: rawNonce,
+      );
+
+      // Вхід у Firebase
+      final userCredential = await _auth.signInWithCredential(credential);
+      
+      if (userCredential.user == null) throw Exception('Помилка Apple Sign In');
+      return UserEntity.fromFirebaseUser(userCredential.user!);
+    } catch (e) {
+      throw Exception('Помилка Apple Sign In: $e');
+    }
+  }
+
+  // 6. Вихід
   Future<void> signOut() async {
+    // Важливо вийти з Google теж, щоб при наступному вході можна було вибрати інший акаунт
+    if (await _googleSignIn.isSignedIn()) {
+      await _googleSignIn.signOut();
+    }
     await _auth.signOut();
   }
   
-  // 5. Поточний користувач (для репозиторіїв)
+  // 7. Поточний користувач
   UserEntity? get currentUser {
     final user = _auth.currentUser;
     return user != null ? UserEntity.fromFirebaseUser(user) : null;
+  }
+
+  // --- Допоміжні методи для Apple Sign In ---
+  String _generateNonce([int length = 32]) {
+    const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
+  }
+
+  String _sha256ofString(String input) {
+    final bytes = utf8.encode(input);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
   }
 }
