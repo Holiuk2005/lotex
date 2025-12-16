@@ -1,45 +1,75 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
-import 'app_text_styles.dart';
+// import 'app_text_styles.dart';
 
 class AppTheme {
-  static ThemeData get lightTheme {
+  static ThemeData light() {
     return ThemeData(
-      useMaterial3: true,
-      scaffoldBackgroundColor: AppColors.backgroundLight,
-      primaryColor: AppColors.primary600,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary600,
-        primary: AppColors.primary600,
+      primaryColor: AppColors.primary500,
+      colorScheme: ColorScheme.light(
+        primary: AppColors.primary,
         secondary: AppColors.accent500,
-        error: AppColors.error,
-      ),
-      
-      appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.backgroundLight,
-        surfaceTintColor: Colors.transparent,
-        centerTitle: false,
-        titleTextStyle: AppTextStyles.h2,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
-      ),
+        background: AppColors.lightBackground,
+        surface: AppColors.lightBackground, // Changed from lightCard
 
+        onPrimary: Colors.white,
+      ),
+      scaffoldBackgroundColor: AppColors.lightBackground,
+      cardColor: AppColors.lightCard,
+      dividerColor: AppColors.dividerLight,
+      textTheme: const TextTheme(
+        titleLarge: TextStyle(color: AppColors.lightTitle),
+        bodyMedium: TextStyle(color: AppColors.lightBody),
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.lightBackground,
+        elevation: 0,
+        titleTextStyle: TextStyle(color: AppColors.lightTitle, fontSize: 18, fontFamily: 'Inter'),
+        iconTheme: const IconThemeData(color: Colors.black87),
+      ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary600,
-          foregroundColor: Colors.white,
+          minimumSize: const Size(double.infinity, 52),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
+      // cardTheme: customized via cardColor and components
+    );
+  }
+
+  static ThemeData dark() {
+    return ThemeData(
+      brightness: Brightness.dark,
+      colorScheme: ColorScheme.dark(
+        primary: AppColors.primary600,
+        secondary: AppColors.accent500,
+        background: AppColors.darkBackground,
+        surface: AppColors.darkCard,
+        onPrimary: Colors.white,
+      ),
+      primaryColor: AppColors.primary600,
+      scaffoldBackgroundColor: AppColors.darkBackground,
+      cardColor: AppColors.darkCard,
+      dividerColor: const Color(0xFF1F2937),
+      textTheme: const TextTheme(
+        titleLarge: TextStyle(color: AppColors.darkTitle),
+        bodyMedium: TextStyle(color: AppColors.darkBody),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: AppColors.darkCard,
+        elevation: 0,
+        titleTextStyle: TextStyle(color: AppColors.darkTitle, fontSize: 18),
+        iconTheme: IconThemeData(color: AppColors.darkBody),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
           minimumSize: const Size(double.infinity, 48),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
-
-      cardTheme: CardThemeData(
-        color: AppColors.cardLight,
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        margin: EdgeInsets.zero,
-      ),
+      // cardTheme: customized via cardColor and components
     );
   }
 }

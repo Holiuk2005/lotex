@@ -18,6 +18,7 @@ mixin _$AuctionEntity {
   String get title;
   String get description;
   String get imageUrl;
+  String? get imageBase64;
   double get startPrice;
   double get currentPrice;
   DateTime get endDate;
@@ -43,6 +44,8 @@ mixin _$AuctionEntity {
                 other.description == description) &&
             (identical(other.imageUrl, imageUrl) ||
                 other.imageUrl == imageUrl) &&
+            (identical(other.imageBase64, imageBase64) ||
+                other.imageBase64 == imageBase64) &&
             (identical(other.startPrice, startPrice) ||
                 other.startPrice == startPrice) &&
             (identical(other.currentPrice, currentPrice) ||
@@ -56,11 +59,11 @@ mixin _$AuctionEntity {
 
   @override
   int get hashCode => Object.hash(runtimeType, id, title, description, imageUrl,
-      startPrice, currentPrice, endDate, sellerId, bidCount);
+      imageBase64, startPrice, currentPrice, endDate, sellerId, bidCount);
 
   @override
   String toString() {
-    return 'AuctionEntity(id: $id, title: $title, description: $description, imageUrl: $imageUrl, startPrice: $startPrice, currentPrice: $currentPrice, endDate: $endDate, sellerId: $sellerId, bidCount: $bidCount)';
+    return 'AuctionEntity(id: $id, title: $title, description: $description, imageUrl: $imageUrl, imageBase64: $imageBase64, startPrice: $startPrice, currentPrice: $currentPrice, endDate: $endDate, sellerId: $sellerId, bidCount: $bidCount)';
   }
 }
 
@@ -75,6 +78,7 @@ abstract mixin class $AuctionEntityCopyWith<$Res> {
       String title,
       String description,
       String imageUrl,
+      String? imageBase64,
       double startPrice,
       double currentPrice,
       DateTime endDate,
@@ -99,6 +103,7 @@ class _$AuctionEntityCopyWithImpl<$Res>
     Object? title = null,
     Object? description = null,
     Object? imageUrl = null,
+    Object? imageBase64 = freezed,
     Object? startPrice = null,
     Object? currentPrice = null,
     Object? endDate = null,
@@ -122,6 +127,10 @@ class _$AuctionEntityCopyWithImpl<$Res>
           ? _self.imageUrl
           : imageUrl // ignore: cast_nullable_to_non_nullable
               as String,
+      imageBase64: freezed == imageBase64
+          ? _self.imageBase64
+          : imageBase64 // ignore: cast_nullable_to_non_nullable
+              as String?,
       startPrice: null == startPrice
           ? _self.startPrice
           : startPrice // ignore: cast_nullable_to_non_nullable
@@ -244,6 +253,7 @@ extension AuctionEntityPatterns on AuctionEntity {
             String title,
             String description,
             String imageUrl,
+            String? imageBase64,
             double startPrice,
             double currentPrice,
             DateTime endDate,
@@ -260,6 +270,7 @@ extension AuctionEntityPatterns on AuctionEntity {
             _that.title,
             _that.description,
             _that.imageUrl,
+            _that.imageBase64,
             _that.startPrice,
             _that.currentPrice,
             _that.endDate,
@@ -290,6 +301,7 @@ extension AuctionEntityPatterns on AuctionEntity {
             String title,
             String description,
             String imageUrl,
+            String? imageBase64,
             double startPrice,
             double currentPrice,
             DateTime endDate,
@@ -305,6 +317,7 @@ extension AuctionEntityPatterns on AuctionEntity {
             _that.title,
             _that.description,
             _that.imageUrl,
+            _that.imageBase64,
             _that.startPrice,
             _that.currentPrice,
             _that.endDate,
@@ -334,6 +347,7 @@ extension AuctionEntityPatterns on AuctionEntity {
             String title,
             String description,
             String imageUrl,
+            String? imageBase64,
             double startPrice,
             double currentPrice,
             DateTime endDate,
@@ -349,6 +363,7 @@ extension AuctionEntityPatterns on AuctionEntity {
             _that.title,
             _that.description,
             _that.imageUrl,
+            _that.imageBase64,
             _that.startPrice,
             _that.currentPrice,
             _that.endDate,
@@ -368,6 +383,7 @@ class _AuctionEntity extends AuctionEntity {
       required this.title,
       required this.description,
       required this.imageUrl,
+      this.imageBase64,
       required this.startPrice,
       required this.currentPrice,
       required this.endDate,
@@ -383,6 +399,8 @@ class _AuctionEntity extends AuctionEntity {
   final String description;
   @override
   final String imageUrl;
+  @override
+  final String? imageBase64;
   @override
   final double startPrice;
   @override
@@ -414,6 +432,8 @@ class _AuctionEntity extends AuctionEntity {
                 other.description == description) &&
             (identical(other.imageUrl, imageUrl) ||
                 other.imageUrl == imageUrl) &&
+            (identical(other.imageBase64, imageBase64) ||
+                other.imageBase64 == imageBase64) &&
             (identical(other.startPrice, startPrice) ||
                 other.startPrice == startPrice) &&
             (identical(other.currentPrice, currentPrice) ||
@@ -427,11 +447,11 @@ class _AuctionEntity extends AuctionEntity {
 
   @override
   int get hashCode => Object.hash(runtimeType, id, title, description, imageUrl,
-      startPrice, currentPrice, endDate, sellerId, bidCount);
+      imageBase64, startPrice, currentPrice, endDate, sellerId, bidCount);
 
   @override
   String toString() {
-    return 'AuctionEntity(id: $id, title: $title, description: $description, imageUrl: $imageUrl, startPrice: $startPrice, currentPrice: $currentPrice, endDate: $endDate, sellerId: $sellerId, bidCount: $bidCount)';
+    return 'AuctionEntity(id: $id, title: $title, description: $description, imageUrl: $imageUrl, imageBase64: $imageBase64, startPrice: $startPrice, currentPrice: $currentPrice, endDate: $endDate, sellerId: $sellerId, bidCount: $bidCount)';
   }
 }
 
@@ -448,6 +468,7 @@ abstract mixin class _$AuctionEntityCopyWith<$Res>
       String title,
       String description,
       String imageUrl,
+      String? imageBase64,
       double startPrice,
       double currentPrice,
       DateTime endDate,
@@ -472,6 +493,7 @@ class __$AuctionEntityCopyWithImpl<$Res>
     Object? title = null,
     Object? description = null,
     Object? imageUrl = null,
+    Object? imageBase64 = freezed,
     Object? startPrice = null,
     Object? currentPrice = null,
     Object? endDate = null,
@@ -495,6 +517,10 @@ class __$AuctionEntityCopyWithImpl<$Res>
           ? _self.imageUrl
           : imageUrl // ignore: cast_nullable_to_non_nullable
               as String,
+      imageBase64: freezed == imageBase64
+          ? _self.imageBase64
+          : imageBase64 // ignore: cast_nullable_to_non_nullable
+              as String?,
       startPrice: null == startPrice
           ? _self.startPrice
           : startPrice // ignore: cast_nullable_to_non_nullable

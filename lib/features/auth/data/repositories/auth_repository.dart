@@ -2,22 +2,24 @@ import 'dart:convert'; // Для генерації nonce (Apple)
 import 'dart:math';    // Для генерації nonce (Apple)
 import 'package:crypto/crypto.dart'; // Для хешування nonce (Apple)
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart'; // Для перевірки kIsWeb
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../../domain/entities/user_entity.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 final authRepositoryProvider = Provider((ref) => AuthRepository(FirebaseAuth.instance));
 
 class AuthRepository {
   final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // --- НАЛАШТУВАННЯ GOOGLE SIGN IN ---
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     // Використовуємо ваш Client ID тільки для Web
-    clientId: kIsWeb 
-        ? '823233113152-iktaaoltbruf2o3uhmu0d3rjp80qnju1.apps.googleusercontent.com' 
+    clientId: kIsWeb
+        ? '823233113152-iktaaoltbruf2o3uhmu0d3rjp80qnju1.apps.googleusercontent.com'
         : null,
   );
 
@@ -38,6 +40,10 @@ class AuthRepository {
       password: password,
     );
     if (userCredential.user == null) throw Exception('Помилка реєстрації');
+
+    // Зберегти базові дані в Firestore
+    await saveUserData(uid: userCredential.user!.uid, email: email);
+
     return UserEntity.fromFirebaseUser(userCredential.user!);
   }
 
@@ -56,7 +62,7 @@ class AuthRepository {
     try {
       // Запуск вікна авторизації
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      
+
       if (googleUser == null) {
         throw Exception('Вхід скасовано користувачем');
       }
@@ -72,8 +78,17 @@ class AuthRepository {
 
       // Вхід у Firebase
       final userCredential = await _auth.signInWithCredential(credential);
-      
+
       if (userCredential.user == null) throw Exception('Помилка Google входу');
+
+      // Зберегти/оновити дані в Firestore
+      await saveUserData(
+        uid: userCredential.user!.uid,
+        email: userCredential.user!.email ?? '',
+        name: userCredential.user!.displayName,
+        photoUrl: userCredential.user!.photoURL,
+      );
+
       return UserEntity.fromFirebaseUser(userCredential.user!);
     } catch (e) {
       throw Exception('Помилка Google Sign In: $e');
@@ -104,8 +119,17 @@ class AuthRepository {
 
       // Вхід у Firebase
       final userCredential = await _auth.signInWithCredential(credential);
-      
+
       if (userCredential.user == null) throw Exception('Помилка Apple Sign In');
+
+      // Зберегти/оновити дані в Firestore
+      await saveUserData(
+        uid: userCredential.user!.uid,
+        email: userCredential.user!.email ?? '',
+        name: userCredential.user!.displayName,
+        photoUrl: userCredential.user!.photoURL,
+      );
+
       return UserEntity.fromFirebaseUser(userCredential.user!);
     } catch (e) {
       throw Exception('Помилка Apple Sign In: $e');
@@ -120,7 +144,7 @@ class AuthRepository {
     }
     await _auth.signOut();
   }
-  
+
   // 7. Поточний користувач
   UserEntity? get currentUser {
     final user = _auth.currentUser;
@@ -138,5 +162,25 @@ class AuthRepository {
     final bytes = utf8.encode(input);
     final digest = sha256.convert(bytes);
     return digest.toString();
+  }
+
+  // Метод для збереження даних користувача в базу
+  Future<void> saveUserData({
+    required String uid,
+    required String email,
+    String? name,
+    String? photoUrl,
+  }) async {
+    try {
+      await _firestore.collection('users').doc(uid).set({
+        'uid': uid,
+        'email': email,
+        'name': name ?? '',
+        'photoUrl': photoUrl ?? '',
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      throw Exception('Не вдалося зберегти профіль: $e');
+    }
   }
 }

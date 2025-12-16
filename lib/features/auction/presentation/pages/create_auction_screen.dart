@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lotex/core/widgets/theme_toggle.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/create_auction_controller.dart';
 import '../widgets/lotex_input.dart';
@@ -103,7 +104,7 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
     final isLoading = ref.watch(createAuctionControllerProvider).isLoading;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Створити лот")),
+      appBar: AppBar(title: const Text("Створити лот"), actions: const [ThemeToggle()]),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(

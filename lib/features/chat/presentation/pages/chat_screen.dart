@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lotex/core/theme/app_colors.dart';
 import 'package:lotex/core/theme/app_text_styles.dart';
+import 'package:lotex/core/widgets/theme_toggle.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/chat_providers.dart';
 import 'chat_conversation_screen.dart';
@@ -16,9 +17,8 @@ class ChatScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Чат'),
-          backgroundColor: Colors.white,
-          foregroundColor: AppColors.textPrimary,
           elevation: 0,
+          actions: const [ThemeToggle()],
           bottom: TabBar(
             indicatorColor: AppColors.primary500,
             labelColor: AppColors.primary500,

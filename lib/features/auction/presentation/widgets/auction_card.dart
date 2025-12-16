@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -59,11 +60,11 @@ class AuctionCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(12),
-                image: auction.imageUrl.isNotEmpty 
-                  ? DecorationImage(image: NetworkImage(auction.imageUrl), fit: BoxFit.cover)
-                  : null,
+                image: (auction.imageBase64 != null && auction.imageBase64!.isNotEmpty)
+                  ? DecorationImage(image: MemoryImage(base64Decode(auction.imageBase64!)), fit: BoxFit.cover)
+                  : (auction.imageUrl.isNotEmpty ? DecorationImage(image: NetworkImage(auction.imageUrl), fit: BoxFit.cover) : null),
               ),
-              child: auction.imageUrl.isEmpty 
+              child: (auction.imageBase64 == null || auction.imageBase64!.isEmpty) && auction.imageUrl.isEmpty
                   ? const Center(child: Icon(Icons.image, size: 40, color: Colors.grey))
                   : null,
             ),

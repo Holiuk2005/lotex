@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lotex/features/auth/presentation/providers/auth_state_provider.dart';
+import 'package:lotex/core/widgets/theme_toggle.dart';
 import 'package:lotex/core/theme/app_colors.dart';
 import 'package:lotex/core/theme/app_text_styles.dart';
 import 'package:lotex/features/auth/domain/entities/user_entity.dart'; // Переконайтесь, що шлях правильний
@@ -20,8 +21,6 @@ class ProfileScreen extends ConsumerWidget {
         title: const Text('Профіль'),
         centerTitle: false,
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
         actions: [
           if (authState.asData?.value != null)
             IconButton(
@@ -33,9 +32,10 @@ class ProfileScreen extends ConsumerWidget {
                 }
               },
             ),
+          const ThemeToggle(),
         ],
       ),
-      backgroundColor: const Color(0xFFF5F5F5), // Світло-сірий фон
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: authState.when(
         data: (user) {
           if (user == null) {
@@ -74,7 +74,7 @@ class _UserView extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(color: Colors.black.withAlpha((0.05 * 255).round()), blurRadius: 10, offset: const Offset(0, 4)),

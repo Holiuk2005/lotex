@@ -10,7 +10,7 @@ import '../../features/profile/presentation/pages/register_screen.dart';
 import '../../features/main_wrapper/main_wrapper.dart';
 import '../../features/favorites/presentation/pages/favorites_screen.dart';
 import '../../features/chat/presentation/pages/chat_screen.dart';
-import '../../main.dart';
+import '../../features/home/home_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorHomeKey = GlobalKey<NavigatorState>();

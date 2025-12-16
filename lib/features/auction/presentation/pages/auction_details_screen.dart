@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // <--- ДОДАЙ
+import 'dart:convert';
 import 'package:intl/intl.dart';
 // import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart'; //
@@ -120,9 +121,11 @@ class AuctionDetailsScreen extends ConsumerWidget { // <--- ЗМІНИ
               height: 350,
               width: double.infinity,
               color: Colors.grey[200],
-              child: auction.imageUrl.isNotEmpty
-                  ? Image.network(auction.imageUrl, fit: BoxFit.cover)
-                  : const Center(child: Icon(Icons.image, size: 64, color: Colors.grey)),
+              child: (auction.imageBase64 != null && auction.imageBase64!.isNotEmpty)
+                  ? Image.memory(base64Decode(auction.imageBase64!), fit: BoxFit.cover)
+                  : (auction.imageUrl.isNotEmpty
+                      ? Image.network(auction.imageUrl, fit: BoxFit.cover)
+                      : const Center(child: Icon(Icons.image, size: 64, color: Colors.grey))),
             ),
             Padding(
               padding: const EdgeInsets.all(16.0),

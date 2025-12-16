@@ -9,21 +9,13 @@ class DefaultFirebaseOptions {
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        throw UnsupportedError(
-          'Android options are not configured in this file.',
-        );
+        return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'iOS options are not configured in this file.',
-        );
+        return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'macOS options are not configured in this file.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'Windows options are not configured in this file.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'Linux options are not configured in this file.',
@@ -35,14 +27,56 @@ class DefaultFirebaseOptions {
     }
   }
 
-  // ОСЬ ТУТ ВСТАВТЕ ДАНІ З FIREBASE CONSOLE:
   static const FirebaseOptions web = FirebaseOptions(
-  apiKey: "AIzaSyCXIqFFRDcoggp42HumK_oOGc8cAbpGVs0",
-  authDomain: "lotex-4890a.firebaseapp.com",
-  projectId: "lotex-4890a",
-  storageBucket: "lotex-4890a.firebasestorage.app",
-  messagingSenderId: "823233113152",
-  appId: "1:823233113152:web:6565f42bcee8b4acb883a5",
-  measurementId: "G-NP3NFWETVL"
+    apiKey: 'AIzaSyCXIqFFRDcoggp42HumK_oOGc8cAbpGVs0',
+    appId: '1:823233113152:web:6565f42bcee8b4acb883a5',
+    messagingSenderId: '823233113152',
+    projectId: 'lotex-4890a',
+    authDomain: 'lotex-4890a.firebaseapp.com',
+    storageBucket: 'lotex-4890a.firebasestorage.app',
+    measurementId: 'G-NP3NFWETVL',
   );
+
+  // ОСЬ ТУТ ВСТАВТЕ ДАНІ З FIREBASE CONSOLE:
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyDQSla4mzDuocuFYj-MMMt6FBLNSBkPaXg',
+    appId: '1:823233113152:ios:47970db92db8909fb883a5',
+    messagingSenderId: '823233113152',
+    projectId: 'lotex-4890a',
+    storageBucket: 'lotex-4890a.firebasestorage.app',
+    androidClientId: '823233113152-eblfsj3edhp7ug8evhocrnt1kqidp4tk.apps.googleusercontent.com',
+    iosClientId: '823233113152-i6uisql4eg8vfp7qu5i8u9r2lgt6d76h.apps.googleusercontent.com',
+    iosBundleId: 'com.example.lotex',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyDQSla4mzDuocuFYj-MMMt6FBLNSBkPaXg',
+    appId: '1:823233113152:ios:47970db92db8909fb883a5',
+    messagingSenderId: '823233113152',
+    projectId: 'lotex-4890a',
+    storageBucket: 'lotex-4890a.firebasestorage.app',
+    androidClientId: '823233113152-eblfsj3edhp7ug8evhocrnt1kqidp4tk.apps.googleusercontent.com',
+    iosClientId: '823233113152-i6uisql4eg8vfp7qu5i8u9r2lgt6d76h.apps.googleusercontent.com',
+    iosBundleId: 'com.example.lotex',
+  );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyDHlPOLUuBt__ppa-TQtizFCjwNcQU0DNQ',
+    appId: '1:823233113152:android:3a10dcde54334bd2b883a5',
+    messagingSenderId: '823233113152',
+    projectId: 'lotex-4890a',
+    storageBucket: 'lotex-4890a.firebasestorage.app',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyCXIqFFRDcoggp42HumK_oOGc8cAbpGVs0',
+    appId: '1:823233113152:web:68c71885e4edb69db883a5',
+    messagingSenderId: '823233113152',
+    projectId: 'lotex-4890a',
+    authDomain: 'lotex-4890a.firebaseapp.com',
+    storageBucket: 'lotex-4890a.firebasestorage.app',
+    measurementId: 'G-HWCD3BQZY1',
+  );
+
 }
