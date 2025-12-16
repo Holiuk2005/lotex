@@ -5,13 +5,18 @@ import '../../features/auction/domain/entities/auction_entity.dart';
 import '../../features/auction/presentation/pages/auction_details_screen.dart';
 import '../../features/auction/presentation/pages/create_auction_screen.dart';
 import '../../features/profile/presentation/pages/profile_screen.dart';
+import '../../features/auth/presentation/pages/login_screen.dart';
+import '../../features/profile/presentation/pages/register_screen.dart';
 import '../../features/main_wrapper/main_wrapper.dart';
-// Імпорт Home, який ми визначимо в main.dart для простоти
-import '../../main.dart'; 
+import '../../features/favorites/presentation/pages/favorites_screen.dart';
+import '../../features/chat/presentation/pages/chat_screen.dart';
+import '../../main.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorHomeKey = GlobalKey<NavigatorState>();
 final _shellNavigatorCreateKey = GlobalKey<NavigatorState>();
+final _shellNavigatorFavoritesKey = GlobalKey<NavigatorState>();
+final _shellNavigatorChatKey = GlobalKey<NavigatorState>();
 final _shellNavigatorProfileKey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -31,9 +36,21 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
           StatefulShellBranch(
+            navigatorKey: _shellNavigatorFavoritesKey,
+            routes: [
+              GoRoute(path: '/favorites', builder: (context, state) => const FavoritesScreen()),
+            ],
+          ),
+          StatefulShellBranch(
             navigatorKey: _shellNavigatorCreateKey,
             routes: [
               GoRoute(path: '/create', builder: (context, state) => const CreateAuctionScreen()),
+            ],
+          ),
+          StatefulShellBranch(
+            navigatorKey: _shellNavigatorChatKey,
+            routes: [
+              GoRoute(path: '/chat', builder: (context, state) => const ChatScreen()),
             ],
           ),
           StatefulShellBranch(
@@ -44,6 +61,19 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
+
+      GoRoute(
+        path: '/login',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const LoginScreen(),
+      ),
+
+      GoRoute(
+        path: '/register',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const RegisterScreen(),
+      ),
+
       GoRoute(
         path: '/auction',
         parentNavigatorKey: _rootNavigatorKey,

@@ -1,7 +1,9 @@
 import 'dart:io'; // Для Platform
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import 'package:lotex/core/router/app_router.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../auction/presentation/widgets/lotex_input.dart';
 import '../providers/auth_state_provider.dart';
@@ -21,18 +23,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   // Змінна для перемикання між Входом та Реєстрацією
   bool isSigningUp = false;
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final controller = ref.read(authControllerProvider.notifier);
+    final router = ref.read(routerProvider);
+    final messenger = ScaffoldMessenger.of(context);
 
-    // Викликаємо відповідний метод залежно від режиму
-    if (isSigningUp) {
-      controller.signUp(email: email, password: password);
-    } else {
-      controller.signIn(email: email, password: password);
+    try {
+      if (isSigningUp) {
+        await controller.signUp(email: email, password: password);
+      } else {
+        await controller.signIn(email: email, password: password);
+      }
+      if (!mounted) return;
+      router.go('/home');
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), backgroundColor: AppColors.error),
+        );
+      }
     }
   }
 
@@ -130,27 +143,47 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   children: [
                     // Google
                     _SocialButton(
-  icon: Icons.g_mobiledata,
-  color: Colors.red,
-  isLoading: isLoading,
-  onTap: () async {
-    print("🔘 КНОПКУ НАТИСНУТО!"); // Цей текст має з'явитися в консолі
-    try {
-      await controller.signInWithGoogle();
-      print("✅ Вхід успішний (з точки зору UI)");
-    } catch (e) {
-      print("🛑 ПОМИЛКА ПРИ НАТИСКАННІ: $e");
-    }
-  },
-),
+                      icon: Icons.g_mobiledata,
+                      color: Colors.red,
+                      isLoading: isLoading,
+                      onTap: () async {
+                        final router = ref.read(routerProvider);
+                        final messenger = ScaffoldMessenger.of(context);
+                        try {
+                          await controller.signInWithGoogle();
+                          if (!mounted) return;
+                          router.go('/home');
+                        } catch (e) {
+                          if (mounted) {
+                            messenger.showSnackBar(
+                              SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), backgroundColor: AppColors.error),
+                            );
+                          }
+                        }
+                      },
+                    ),
                     
                     // Apple (показуємо тільки на iOS)
-                    if (Platform.isIOS) ...[
+                    if (!kIsWeb && Platform.isIOS) ...[
                       const SizedBox(width: 20),
                       _SocialButton(
                         icon: Icons.apple,
                         color: Colors.black,
-                        onTap: () => controller.signInWithApple(),
+                        onTap: () async {
+                          final router = ref.read(routerProvider);
+                          final messenger = ScaffoldMessenger.of(context);
+                          try {
+                            await controller.signInWithApple();
+                            if (!mounted) return;
+                            router.go('/home');
+                          } catch (e) {
+                            if (mounted) {
+                              messenger.showSnackBar(
+                                SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), backgroundColor: AppColors.error),
+                              );
+                            }
+                          }
+                        },
                         isLoading: isLoading,
                       ),
                     ],

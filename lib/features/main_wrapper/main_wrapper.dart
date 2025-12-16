@@ -14,14 +14,16 @@ class MainWrapper extends StatelessWidget {
       bottomNavigationBar: NavigationBar(
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: (index) => navigationShell.goBranch(
-          index, 
-          initialLocation: index == navigationShell.currentIndex
+          index,
+          initialLocation: index == navigationShell.currentIndex,
         ),
         backgroundColor: Colors.white,
         indicatorColor: AppColors.primary500.withAlpha((0.2 * 255).round()),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Головна', selectedIcon: Icon(Icons.home)),
-          NavigationDestination(icon: Icon(Icons.add_circle_outline), label: 'Створити', selectedIcon: Icon(Icons.add_circle)),
+          NavigationDestination(icon: Icon(Icons.favorite_border), label: 'Обране', selectedIcon: Icon(Icons.favorite)),
+          NavigationDestination(icon: Icon(Icons.add_circle_outline), label: 'Створити лот', selectedIcon: Icon(Icons.add_circle)),
+          NavigationDestination(icon: Icon(Icons.chat_bubble_outline), label: 'Чат', selectedIcon: Icon(Icons.chat_bubble)),
           NavigationDestination(icon: Icon(Icons.person_outline), label: 'Профіль', selectedIcon: Icon(Icons.person)),
         ],
       ),

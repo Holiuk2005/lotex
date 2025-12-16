@@ -17,7 +17,8 @@ class AuthRepository {
 
   // 1. Потік стану
   Stream<UserEntity?> get authStateChanges {
-    return _auth.authStateChanges().map((user) {
+    // Use userChanges() so profile updates (displayName/photoURL) also emit
+    return _auth.userChanges().map((user) {
       if (user == null) return null;
       return UserEntity.fromFirebaseUser(user);
     });
