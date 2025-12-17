@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lotex/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:lotex/core/widgets/theme_toggle.dart';
+import 'package:lotex/core/widgets/app_button.dart';
 import 'package:lotex/core/theme/app_colors.dart';
 import 'package:lotex/core/theme/app_text_styles.dart';
 import 'package:lotex/features/auth/domain/entities/user_entity.dart'; // Переконайтесь, що шлях правильний
@@ -158,15 +159,9 @@ class _UserView extends ConsumerWidget {
           // Кнопка виходу
           SizedBox(
             width: double.infinity,
-            child: TextButton.icon(
+            child: AppButton.secondary(
+              label: 'Вийти з акаунту',
               onPressed: () => _showLogoutDialog(context, ref),
-              icon: const Icon(Icons.logout, color: AppColors.error),
-              label: const Text('Вийти з акаунту', style: TextStyle(color: AppColors.error, fontSize: 16)),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              ),
             ),
           ),
         ],
@@ -218,12 +213,12 @@ class _UserView extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Скасувати', style: TextStyle(color: Colors.grey)),
+            child: Text('Скасувати', style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
+              backgroundColor: Theme.of(context).colorScheme.error,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             child: const Text('Вийти', style: TextStyle(color: Colors.white)),
@@ -269,30 +264,15 @@ class _GuestView extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 48),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: () => context.go('/login'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary600,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 4,
-                ),
-                child: const Text('УВІЙТИ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              ),
+            const SizedBox(height: 8),
+            AppButton.primary(
+              label: 'УВІЙТИ',
+              onPressed: () => context.go('/login'),
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: OutlinedButton(
-                onPressed: () => context.go('/register'),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.primary600),
-                ),
-                child: const Text('ЗАРЕЄСТРУВАТИСЯ', style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
+            const SizedBox(height: 12),
+            AppButton.secondary(
+              label: 'ЗАРЕЄСТРУВАТИСЯ',
+              onPressed: () => context.go('/register'),
             ),
           ],
         ),

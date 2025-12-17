@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lotex/core/theme/app_colors.dart';
 import 'package:lotex/core/theme/app_text_styles.dart';
 import 'package:lotex/core/widgets/theme_toggle.dart';
+import 'package:lotex/core/widgets/app_input.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/chat_providers.dart';
 import 'chat_conversation_screen.dart';
@@ -162,25 +163,24 @@ class _ChatInputAreaState extends ConsumerState<_ChatInputArea> {
       child: Row(
         children: [
           Expanded(
-            child: TextField(
+            child: AppInput(
+              label: 'Напишіть повідомлення...',
               controller: _controller,
-              decoration: InputDecoration(
-                hintText: 'Напишіть повідомлення...',
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
-              ),
+              maxLines: 1,
             ),
           ),
           const SizedBox(width: 8),
           SizedBox(
             width: 48,
             height: 48,
-            child: ElevatedButton(
-              onPressed: _send,
-              style: ElevatedButton.styleFrom(shape: const CircleBorder(), padding: const EdgeInsets.all(12)),
-              child: const Icon(Icons.send),
+            child: Material(
+              color: Theme.of(context).colorScheme.primary,
+              shape: const CircleBorder(),
+              child: IconButton(
+                onPressed: _send,
+                icon: const Icon(Icons.send),
+                color: Colors.white,
+              ),
             ),
           ),
         ],

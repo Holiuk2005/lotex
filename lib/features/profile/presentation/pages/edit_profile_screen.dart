@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lotex/core/theme/app_colors.dart';
+import 'package:lotex/core/widgets/app_input.dart';
+import 'package:lotex/core/widgets/app_button.dart';
 // import 'package:lotex/core/theme/app_text_styles.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
@@ -124,16 +126,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Ім\'я'), readOnly: _saving),
+                AppInput(label: 'Ім\'я', controller: _nameController, validator: (v) => v == null || v.isEmpty ? 'Введіть ім\'я' : null),
                 const SizedBox(height: 12),
-                TextField(controller: _phoneController, decoration: const InputDecoration(labelText: 'Телефон'), keyboardType: TextInputType.phone, readOnly: _saving),
+                AppInput(label: 'Телефон', controller: _phoneController, keyboardType: TextInputType.phone),
                 const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _saving ? null : _save,
-                    child: _saving ? const SizedBox(width:20,height:20,child:CircularProgressIndicator(color: Colors.white, strokeWidth:2)) : const Text('Зберегти'),
-                  ),
+                AppButton.primary(
+                  label: _saving ? 'Збереження...' : 'Зберегти',
+                  onPressed: _saving ? null : _save,
                 ),
               ],
             ),

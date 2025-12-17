@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lotex/core/theme/app_text_styles.dart';
+import 'package:lotex/core/widgets/app_input.dart';
 import '../providers/chat_providers.dart';
 
 class ChatConversationScreen extends ConsumerWidget {
@@ -80,7 +81,7 @@ class _ConversationInputState extends ConsumerState<_ConversationInput> {
         child: Row(
           children: [
             Expanded(
-              child: TextField(controller: _controller, decoration: const InputDecoration(hintText: 'Напишіть повідомлення...')),
+              child: AppInput(label: 'Напишіть повідомлення...', controller: _controller, maxLines: 1),
             ),
             IconButton(onPressed: _send, icon: const Icon(Icons.send)),
           ],

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 
 class LotexInput extends StatelessWidget {
   final String label;
@@ -33,20 +31,16 @@ class LotexInput extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTextStyles.h3.copyWith(fontSize: 14)),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 14, fontWeight: FontWeight.w600) ?? const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.dividerLight),
-            boxShadow: [
-              BoxShadow(
-                color: const Color.fromRGBO(0,0,0,0.03),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              )
-            ],
+            border: Border.all(color: Theme.of(context).dividerColor),
           ),
           child: TextFormField(
             controller: controller,
@@ -56,10 +50,10 @@ class LotexInput extends StatelessWidget {
             maxLines: maxLines,
             readOnly: readOnly,
             onTap: onTap,
-            style: AppTextStyles.bodyRegular,
+            style: Theme.of(context).textTheme.bodyMedium,
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: const TextStyle(color: Colors.grey),
+              hintStyle: TextStyle(color: Theme.of(context).hintColor),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               suffixIcon: suffixIcon,

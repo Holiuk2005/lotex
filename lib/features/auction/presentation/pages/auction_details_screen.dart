@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 // import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart'; //
 import '../../../../core/theme/app_text_styles.dart';
+import 'package:lotex/core/widgets/app_button.dart';
 import '../../domain/entities/auction_entity.dart'; //
 import '../providers/place_bid_controller.dart'; // <--- ДОДАЙ
 import '../widgets/lotex_input.dart'; // <--- ДОДАЙ (сподіваюсь, цей файл є)
@@ -60,8 +61,12 @@ class AuctionDetailsScreen extends ConsumerWidget { // <--- ЗМІНИ
                       final state = ref.watch(placeBidControllerProvider);
                       final isLoading = state.isLoading;
                       
-                      return ElevatedButton(
-                        onPressed: isLoading ? null : () {
+                      if (isLoading) {
+                        return const SizedBox(height: 52, child: Center(child: CircularProgressIndicator()));
+                      }
+                      return AppButton.primary(
+                        label: 'ПІДТВЕРДИТИ СТАВКУ',
+                        onPressed: () {
                           if (formKey.currentState!.validate()) {
                             final bidAmount = double.parse(bidController.text);
                             ref.read(placeBidControllerProvider.notifier).placeBid(
@@ -70,9 +75,6 @@ class AuctionDetailsScreen extends ConsumerWidget { // <--- ЗМІНИ
                             );
                           }
                         },
-                        child: isLoading
-                            ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                            : const Text("ПІДТВЕРДИТИ СТАВКУ"),
                       );
                     }
                   ),
@@ -158,14 +160,13 @@ class AuctionDetailsScreen extends ConsumerWidget { // <--- ЗМІНИ
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           boxShadow: [BoxShadow(color: const Color.fromRGBO(0,0,0,0.1), blurRadius: 10)],
         ),
         child: SafeArea(
-          child: ElevatedButton(
-            onPressed: () => _showBidSheet(context, ref), // <--- ВИКЛИК ШІТУ
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent500),
-            child: const Text("ЗРОБИТИ СТАВКУ"),
+          child: AppButton.primary(
+            label: 'ЗРОБИТИ СТАВКУ',
+            onPressed: () => _showBidSheet(context, ref),
           ),
         ),
       ),

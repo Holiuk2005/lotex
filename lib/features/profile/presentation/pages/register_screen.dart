@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // no-go_router import
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import 'package:lotex/core/widgets/app_button.dart';
 import '../../../auction/presentation/widgets/lotex_input.dart';
 import 'package:lotex/features/auth/presentation/providers/auth_state_provider.dart';
 
@@ -92,14 +93,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 32),
                 
-                SizedBox(
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _submit,
-                    child: _isLoading 
-                      ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
-                      : const Text("ЗАРЕЄСТРУВАТИСЯ"),
-                  ),
+                AppButton.primary(
+                  label: _isLoading ? 'Зачекайте...' : 'ЗАРЕЄСТРУВАТИСЯ',
+                  onPressed: _isLoading ? null : _submit,
                 ),
               ],
             ),

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'package:lotex/core/router/app_router.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import 'package:lotex/core/widgets/app_button.dart';
 import '../../../auction/presentation/widgets/lotex_input.dart';
 import '../providers/auth_state_provider.dart';
 
@@ -112,14 +113,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 32),
                 
                 // --- КНОПКА ДІЇ (Вхід або Реєстрація) ---
-                SizedBox(
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: isLoading ? null : _submit,
-                    child: isLoading
-                        ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : Text(isSigningUp ? 'ЗАРЕЄСТРУВАТИСЬ' : 'УВІЙТИ'),
-                  ),
+                AppButton.primary(
+                  label: isLoading ? 'Зачекайте...' : (isSigningUp ? 'ЗАРЕЄСТРУВАТИСЬ' : 'УВІЙТИ'),
+                  onPressed: isLoading ? null : _submit,
                 ),
                 
                 const SizedBox(height: 24),
@@ -201,7 +197,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   },
                   child: Text(
                     isSigningUp ? 'Вже є акаунт? Увійти' : 'Немає акаунта? Зареєструватись',
-                    style: AppTextStyles.bodyRegular.copyWith(color: AppColors.primary600),
+                    style: AppTextStyles.bodyRegular.copyWith(color: Theme.of(context).colorScheme.primary),
                   ),
                 ),
               ],

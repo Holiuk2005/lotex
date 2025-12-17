@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lotex/core/widgets/theme_toggle.dart';
+import 'package:lotex/core/widgets/app_input.dart';
+import 'package:lotex/core/widgets/app_button.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/create_auction_controller.dart';
 import '../widgets/lotex_input.dart';
@@ -173,25 +175,18 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              AppInput(
+                label: 'Дата завершення',
                 controller: _dateController,
                 readOnly: true,
-                decoration: const InputDecoration(
-                    labelText: 'Дата завершення',
-                    suffixIcon: Icon(Icons.calendar_today),
-                ),
                 onTap: _pickDateTime,
+                suffixIcon: const Icon(Icons.calendar_today),
                 validator: (v) => v == null || v.isEmpty ? 'Оберіть дату' : null,
               ),
               const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: isLoading ? null : _submit,
-                  child: isLoading 
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) 
-                    : const Text('СТВОРИТИ ЛОТ'),
-                ),
+              AppButton.primary(
+                label: isLoading ? 'Зачекайте...' : 'СТВОРИТИ ЛОТ',
+                onPressed: isLoading ? null : _submit,
               ),
             ],
           ),
