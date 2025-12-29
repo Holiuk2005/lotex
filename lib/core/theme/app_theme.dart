@@ -9,7 +9,6 @@ class AppTheme {
       colorScheme: ColorScheme.light(
         primary: AppColors.primary,
         secondary: AppColors.accent500,
-        background: AppColors.lightBackground,
         surface: AppColors.lightBackground, // Changed from lightCard
 
         onPrimary: Colors.white,
@@ -44,7 +43,6 @@ class AppTheme {
       colorScheme: ColorScheme.dark(
         primary: AppColors.primary600,
         secondary: AppColors.accent500,
-        background: AppColors.darkBackground,
         surface: AppColors.darkCard,
         onPrimary: Colors.white,
       ),

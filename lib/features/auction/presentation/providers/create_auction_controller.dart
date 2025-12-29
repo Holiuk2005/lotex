@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart'; // <-- ОБОВ'ЯЗКОВИЙ ІМПОРТ
-import 'package:lotex/features/auth/data/repositories/presentation/providers/auth_state_provider.dart';
+import 'package:lotex/features/auth/presentation/providers/auth_state_provider.dart';
 import '../../data/repositories/auction_repository.dart';
 
 final createAuctionControllerProvider = AsyncNotifierProvider<CreateAuctionController, void>(
