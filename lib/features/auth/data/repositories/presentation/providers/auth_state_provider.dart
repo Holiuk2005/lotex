@@ -11,9 +11,19 @@ final authRepositoryProvider = Provider((ref) => AuthRepository(FirebaseAuth.ins
 
 class AuthRepository {
   final FirebaseAuth _auth;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(); // Ініціалізація Google
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance; // Singleton (google_sign_in 7.x)
+  Future<void>? _googleInit;
+
+  static const String _googleWebClientId =
+      '823233113152-iktaaoltbruf2o3uhmu0d3rjp80qnju1.apps.googleusercontent.com';
 
   AuthRepository(this._auth);
+
+  Future<void> _ensureGoogleInitialized() {
+    return _googleInit ??= _googleSignIn.initialize(
+      serverClientId: _googleWebClientId,
+    );
+  }
 
   // 1. Потік стану
   Stream<UserEntity?> get authStateChanges {
@@ -47,14 +57,14 @@ class AuthRepository {
   // --- НОВЕ: Вхід через Google ---
   Future<UserEntity> signInWithGoogle() async {
     try {
-      // Запуск потоку входу Google
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) throw Exception('Вхід скасовано користувачем');
+      await _ensureGoogleInitialized();
 
-      // Отримання токенів
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      // Запуск інтерактивної авторизації
+      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
+
+      // Отримання токенів (google_sign_in 7.x повертає лише idToken)
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
@@ -100,6 +110,7 @@ class AuthRepository {
 
   // 4. Вихід
   Future<void> signOut() async {
+    await _ensureGoogleInitialized();
     await _googleSignIn.signOut(); // Вихід з Google теж
     await _auth.signOut();
   }

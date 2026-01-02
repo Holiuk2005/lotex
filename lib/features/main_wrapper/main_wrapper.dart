@@ -1,32 +1,104 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/theme/app_colors.dart';
+import 'package:lotex/core/widgets/lotex_bottom_nav.dart';
+import 'package:lotex/core/widgets/lotex_sidebar.dart';
+import 'package:lotex/core/theme/lotex_ui_tokens.dart';
+import 'package:lotex/features/auction/presentation/providers/create_submit_provider.dart';
 
-class MainWrapper extends StatelessWidget {
+class MainWrapper extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
 
   const MainWrapper({super.key, required this.navigationShell});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: (index) => navigationShell.goBranch(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mq = MediaQuery.of(context);
+    final isDesktopWidth = mq.size.width >= 768;
+    final isWebMobile = kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS);
+    final isDesktop = isDesktopWidth && !isWebMobile;
+
+    void goTo(int index) => navigationShell.goBranch(
           index,
           initialLocation: index == navigationShell.currentIndex,
+        );
+
+    Widget sellFab() {
+      final submitCallback = ref.watch(createSubmitCallbackProvider);
+      const double buttonSize = 72;
+      const double overlapFraction = 0.75;
+      const double overlap = buttonSize * overlapFraction;
+      final double bottomInset = MediaQuery.paddingOf(context).bottom;
+      final double bottom = (LotexBottomNav.height + bottomInset) - overlap;
+
+      return Positioned(
+        left: 0,
+        right: 0,
+        bottom: bottom,
+        child: Center(
+          child: GestureDetector(
+            onTap: () {
+              final isCreateBranch = navigationShell.currentIndex == 2;
+              if (isCreateBranch && submitCallback != null) {
+                submitCallback();
+              } else {
+                goTo(2);
+              }
+            },
+            child: Material(
+              color: Colors.transparent,
+              elevation: 12,
+              shadowColor: LotexUiColors.violet500.withAlpha((0.45 * 255).round()),
+              borderRadius: BorderRadius.circular(18),
+              child: Container(
+                width: buttonSize,
+                height: buttonSize,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [LotexUiColors.violet600, LotexUiColors.blue600],
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: Colors.white.withAlpha((0.20 * 255).round()),
+                  ),
+                ),
+                child: const Icon(Icons.add, color: Colors.white, size: 32),
+              ),
+            ),
+          ),
         ),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        indicatorColor: AppColors.primary500.withAlpha((0.2 * 255).round()),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Головна', selectedIcon: Icon(Icons.home)),
-          NavigationDestination(icon: Icon(Icons.favorite_border), label: 'Обране', selectedIcon: Icon(Icons.favorite)),
-          NavigationDestination(icon: Icon(Icons.add_circle_outline), label: 'Створити лот', selectedIcon: Icon(Icons.add_circle)),
-          NavigationDestination(icon: Icon(Icons.chat_bubble_outline), label: 'Чат', selectedIcon: Icon(Icons.chat_bubble)),
-          NavigationDestination(icon: Icon(Icons.person_outline), label: 'Профіль', selectedIcon: Icon(Icons.person)),
-        ],
-      ),
+      );
+    }
+
+    return Scaffold(
+      body: isDesktop
+          ? Row(
+              children: [
+                LotexSidebar(
+                  currentIndex: navigationShell.currentIndex,
+                  onSelect: goTo,
+                ),
+                Expanded(child: navigationShell),
+              ],
+            )
+          : Stack(
+              children: [
+                navigationShell,
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: LotexBottomNav(
+                    currentIndex: navigationShell.currentIndex,
+                    onSelect: goTo,
+                  ),
+                ),
+                // Foreground action above ALL screens.
+                sellFab(),
+              ],
+            ),
     );
   }
 }

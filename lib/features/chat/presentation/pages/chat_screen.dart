@@ -1,39 +1,152 @@
 import 'package:flutter/material.dart';
-import 'package:lotex/core/theme/app_colors.dart';
-import 'package:lotex/core/theme/app_text_styles.dart';
-import 'package:lotex/core/widgets/theme_toggle.dart';
-import 'package:lotex/core/widgets/app_input.dart';
+import 'package:lotex/core/theme/lotex_ui_tokens.dart';
+import 'package:lotex/core/widgets/lotex_app_bar.dart';
+import 'package:lotex/core/widgets/lotex_background.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/chat_providers.dart';
 import 'chat_conversation_screen.dart';
-import 'package:lotex/features/auth/presentation/providers/auth_state_provider.dart';
+import 'package:lotex/core/i18n/language_provider.dart';
+import 'package:lotex/core/i18n/lotex_i18n.dart';
+import 'package:lotex/core/utils/human_error.dart';
 
-class ChatScreen extends StatelessWidget {
+class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
 
   @override
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends ConsumerState<ChatScreen> {
+  final TextEditingController _search = TextEditingController();
+  String? _selectedDialogId;
+  String? _selectedRole;
+  String? _selectedTitle;
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(lotexLanguageProvider);
+    final isWide = MediaQuery.sizeOf(context).width >= 900;
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Чат'),
-          elevation: 0,
-          actions: const [ThemeToggle()],
-          bottom: TabBar(
-            indicatorColor: AppColors.primary500,
-            labelColor: AppColors.primary500,
-            unselectedLabelColor: Colors.grey,
-            tabs: const [
-              Tab(text: 'Продавець'),
-              Tab(text: 'Покупець'),
-            ],
+        appBar: LotexAppBar(
+          titleText: LotexI18n.tr(lang, 'messages'),
+          showDefaultActions: false,
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(56),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha((0.05 * 255).round()),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white.withAlpha((0.10 * 255).round())),
+                ),
+                child: TabBar(
+                  dividerColor: Colors.transparent,
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  indicator: BoxDecoration(
+                    color: Colors.white.withAlpha((0.10 * 255).round()),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  labelColor: Colors.white,
+                  unselectedLabelColor: LotexUiColors.slate400,
+                  labelStyle: const TextStyle(fontWeight: FontWeight.w700),
+                  unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
+                  tabs: [
+                    Tab(text: LotexI18n.tr(lang, 'seller')),
+                    Tab(text: LotexI18n.tr(lang, 'buyer')),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
-        body: TabBarView(
+        body: Stack(
           children: [
-            _SellerChatTab(),
-            _BuyerChatTab(),
+            const LotexBackground(),
+            TabBarView(
+              children: [
+                _DialogsTab(
+                  role: 'seller',
+                  lang: lang,
+                  isWide: isWide,
+                  searchText: _search.text,
+                  onSearchChanged: (v) => setState(() {}),
+                  onSelectDialog: (id, role, title) {
+                    if (isWide) {
+                      setState(() {
+                        _selectedDialogId = id;
+                        _selectedRole = role;
+                        _selectedTitle = title;
+                      });
+                      return;
+                    }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChatConversationScreen(dialogId: id, role: role, title: title),
+                      ),
+                    );
+                  },
+                  selectedDialogId: _selectedDialogId,
+                  rightPane: isWide
+                      ? (_selectedDialogId == null || _selectedRole == null || _selectedTitle == null)
+                          ? _EmptyConversation(lang: lang)
+                          : ConversationView(
+                              dialogId: _selectedDialogId!,
+                              role: _selectedRole!,
+                              title: _selectedTitle!,
+                              embedded: true,
+                            )
+                      : null,
+                  searchController: _search,
+                ),
+                _DialogsTab(
+                  role: 'buyer',
+                  lang: lang,
+                  isWide: isWide,
+                  searchText: _search.text,
+                  onSearchChanged: (v) => setState(() {}),
+                  onSelectDialog: (id, role, title) {
+                    if (isWide) {
+                      setState(() {
+                        _selectedDialogId = id;
+                        _selectedRole = role;
+                        _selectedTitle = title;
+                      });
+                      return;
+                    }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChatConversationScreen(dialogId: id, role: role, title: title),
+                      ),
+                    );
+                  },
+                  selectedDialogId: _selectedDialogId,
+                  rightPane: isWide
+                      ? (_selectedDialogId == null || _selectedRole == null || _selectedTitle == null)
+                          ? _EmptyConversation(lang: lang)
+                          : ConversationView(
+                              dialogId: _selectedDialogId!,
+                              role: _selectedRole!,
+                              title: _selectedTitle!,
+                              embedded: true,
+                            )
+                      : null,
+                  searchController: _search,
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -41,150 +154,214 @@ class ChatScreen extends StatelessWidget {
   }
 }
 
-class _SellerChatTab extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          Expanded(
-            child: Consumer(
-              builder: (context, ref, _) {
-                final dialogs = ref.watch(sellerDialogsProvider);
-                return dialogs.when(
-                  data: (list) {
-                    if (list.isEmpty) return Center(child: Text('Немає діалогів', style: AppTextStyles.bodyRegular));
-                    return ListView.separated(
-                      itemCount: list.length,
-                      separatorBuilder: (_, __) => const Divider(),
-                      itemBuilder: (context, index) {
-                        final d = list[index];
-                        return ListTile(
-                          title: Text(d.title),
-                          subtitle: Text('${d.participants.length} учасників'),
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => ChatConversationScreen(dialogId: d.id, role: d.role, title: d.title)),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, s) => Center(child: Text('Помилка: $e')),
-                );
-              },
-            ),
-          ),
-          _ChatInputArea(role: 'Продавець'),
-        ],
-      ),
-    );
-  }
-}
-
-class _BuyerChatTab extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          Expanded(
-            child: Consumer(
-              builder: (context, ref, _) {
-                final dialogs = ref.watch(buyerDialogsProvider);
-                return dialogs.when(
-                  data: (list) {
-                    if (list.isEmpty) return Center(child: Text('Немає діалогів', style: AppTextStyles.bodyRegular));
-                    return ListView.separated(
-                      itemCount: list.length,
-                      separatorBuilder: (_, __) => const Divider(),
-                      itemBuilder: (context, index) {
-                        final d = list[index];
-                        return ListTile(
-                          title: Text(d.title),
-                          subtitle: Text('${d.participants.length} учасників'),
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => ChatConversationScreen(dialogId: d.id, role: d.role, title: d.title)),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, s) => Center(child: Text('Помилка: $e')),
-                );
-              },
-            ),
-          ),
-          _ChatInputArea(role: 'Покупець'),
-        ],
-      ),
-    );
-  }
-}
-
-class _ChatInputArea extends ConsumerStatefulWidget {
+class _DialogsTab extends ConsumerWidget {
   final String role;
-  const _ChatInputArea({required this.role});
+  final LotexLanguage lang;
+  final bool isWide;
+  final String searchText;
+  final ValueChanged<String> onSearchChanged;
+  final void Function(String id, String role, String title) onSelectDialog;
+  final String? selectedDialogId;
+  final Widget? rightPane;
+  final TextEditingController searchController;
+
+  const _DialogsTab({
+    required this.role,
+    required this.lang,
+    required this.isWide,
+    required this.searchText,
+    required this.onSearchChanged,
+    required this.onSelectDialog,
+    required this.selectedDialogId,
+    required this.rightPane,
+    required this.searchController,
+  });
 
   @override
-  ConsumerState<_ChatInputArea> createState() => _ChatInputAreaState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dialogs = role == 'seller' ? ref.watch(sellerDialogsProvider) : ref.watch(buyerDialogsProvider);
 
-class _ChatInputAreaState extends ConsumerState<_ChatInputArea> {
-  final TextEditingController _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _send() async {
-    final text = _controller.text.trim();
-    if (text.isEmpty) return;
-    final chatRepo = ref.read(chatSendProvider);
-    final authUser = ref.read(authStateChangesProvider).maybeWhen(data: (u) => u, orElse: () => null);
-    final senderId = authUser?.uid ?? 'guest';
-    await chatRepo.sendMessage(text: text, senderId: senderId, role: widget.role.toLowerCase());
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Відправлено (${widget.role})')));
-      _controller.clear();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Row(
+    final listPane = Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
         children: [
-          Expanded(
-            child: AppInput(
-              label: 'Напишіть повідомлення...',
-              controller: _controller,
-              maxLines: 1,
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha((0.04 * 255).round()),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withAlpha((0.08 * 255).round())),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                const Icon(Icons.search, color: LotexUiColors.slate400, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: searchController,
+                    onChanged: onSearchChanged,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                    decoration: const InputDecoration(
+                      hintText: 'Search messages...',
+                      hintStyle: TextStyle(color: LotexUiColors.slate500, fontWeight: FontWeight.w600),
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+                if (searchController.text.isNotEmpty)
+                  IconButton(
+                    onPressed: () {
+                      searchController.clear();
+                      onSearchChanged('');
+                    },
+                    icon: const Icon(Icons.close, color: LotexUiColors.slate400, size: 18),
+                    tooltip: 'Clear',
+                  ),
+              ],
             ),
           ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 48,
-            height: 48,
-            child: Material(
-              color: Theme.of(context).colorScheme.primary,
-              shape: const CircleBorder(),
-              child: IconButton(
-                onPressed: _send,
-                icon: const Icon(Icons.send),
-                color: Colors.white,
+          const SizedBox(height: 12),
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha((0.04 * 255).round()),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withAlpha((0.08 * 255).round())),
+              ),
+              child: dialogs.when(
+                data: (list) {
+                  final q = searchController.text.trim().toLowerCase();
+                  final filtered = q.isEmpty
+                      ? list
+                      : list.where((d) => d.title.toLowerCase().contains(q)).toList();
+
+                  if (filtered.isEmpty) {
+                    return Center(
+                      child: Text(
+                        q.isEmpty ? LotexI18n.tr(lang, 'noDialogs') : 'No messages yet',
+                        style: const TextStyle(color: LotexUiColors.slate400, fontWeight: FontWeight.w600),
+                      ),
+                    );
+                  }
+
+                  return ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, __) => Divider(color: Colors.white.withAlpha((0.06 * 255).round())),
+                    itemBuilder: (context, index) {
+                      final d = filtered[index];
+                      final isSelected = selectedDialogId != null && selectedDialogId == d.id;
+
+                      return InkWell(
+                        onTap: () => onSelectDialog(d.id, d.role, d.title),
+                        child: Container(
+                          color: isSelected ? Colors.white.withAlpha((0.06 * 255).round()) : Colors.transparent,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 22,
+                                backgroundColor: Colors.white.withAlpha((0.06 * 255).round()),
+                                child: Text(
+                                  (d.title.trim().isNotEmpty ? d.title.trim()[0].toUpperCase() : '?'),
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            d.title,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          _formatTime(d.updatedAt),
+                                          style: const TextStyle(color: LotexUiColors.slate500, fontSize: 11),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      d.lastMessage.isNotEmpty
+                                          ? d.lastMessage
+                                          : '${d.participants.length} ${LotexI18n.tr(lang, 'participants')}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(color: LotexUiColors.slate400, fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator(color: LotexUiColors.violet500)),
+                error: (e, s) => Center(
+                  child: Text(
+                    LotexI18n.tr(lang, 'errorWithDetails').replaceFirst('{details}', humanError(e)),
+                    style: const TextStyle(color: LotexUiColors.slate400),
+                  ),
+                ),
               ),
             ),
           ),
         ],
       ),
     );
+
+    if (!isWide) return listPane;
+
+    return Row(
+      children: [
+        SizedBox(width: 380, child: listPane),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(0, 16, 16, 16),
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha((0.04 * 255).round()),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withAlpha((0.08 * 255).round())),
+              ),
+              child: rightPane,
+            ),
+          ),
+        ),
+      ],
+    );
   }
+}
+
+class _EmptyConversation extends StatelessWidget {
+  final LotexLanguage lang;
+  const _EmptyConversation({required this.lang});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        LotexI18n.tr(lang, 'noMessagesYet'),
+        style: const TextStyle(color: LotexUiColors.slate400, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+String _formatTime(DateTime dt) {
+  String two(int v) => v.toString().padLeft(2, '0');
+  return '${two(dt.hour)}:${two(dt.minute)}';
 }

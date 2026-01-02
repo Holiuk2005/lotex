@@ -16,14 +16,20 @@ class AuthRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // --- НАЛАШТУВАННЯ GOOGLE SIGN IN ---
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    // Використовуємо ваш Client ID тільки для Web
-    clientId: kIsWeb
-        ? '823233113152-iktaaoltbruf2o3uhmu0d3rjp80qnju1.apps.googleusercontent.com'
-        : null,
-  );
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  Future<void>? _googleInit;
+
+  static const String _googleWebClientId =
+      '823233113152-iktaaoltbruf2o3uhmu0d3rjp80qnju1.apps.googleusercontent.com';
 
   AuthRepository(this._auth);
+
+  Future<void> _ensureGoogleInitialized() {
+    return _googleInit ??= _googleSignIn.initialize(
+      clientId: kIsWeb ? _googleWebClientId : null,
+      serverClientId: kIsWeb ? null : _googleWebClientId,
+    );
+  }
 
   // 1. Потік стану авторизації
   Stream<UserEntity?> get authStateChanges {
@@ -60,19 +66,16 @@ class AuthRepository {
   // --- 4. Вхід через GOOGLE ---
   Future<UserEntity> signInWithGoogle() async {
     try {
-      // Запуск вікна авторизації
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      await _ensureGoogleInitialized();
 
-      if (googleUser == null) {
-        throw Exception('Вхід скасовано користувачем');
-      }
+      // Запуск інтерактивної авторизації
+      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
 
-      // Отримання токенів
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      // Отримання токенів (google_sign_in 7.x повертає лише idToken)
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
       // Створення credential для Firebase
       final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
@@ -138,10 +141,9 @@ class AuthRepository {
 
   // 6. Вихід
   Future<void> signOut() async {
+    await _ensureGoogleInitialized();
     // Важливо вийти з Google теж, щоб при наступному вході можна було вибрати інший акаунт
-    if (await _googleSignIn.isSignedIn()) {
-      await _googleSignIn.signOut();
-    }
+    await _googleSignIn.signOut();
     await _auth.signOut();
   }
 

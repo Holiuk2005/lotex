@@ -6,7 +6,7 @@ final placeBidControllerProvider = AsyncNotifierProvider.autoDispose<PlaceBidCon
   PlaceBidController.new,
 );
 
-class PlaceBidController extends AsyncNotifier<void> {
+class PlaceBidController extends AutoDisposeAsyncNotifier<void> {
   late final AuctionRepository _repository;
 
   @override

@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lotex/core/utils/human_error.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lotex/core/theme/app_colors.dart';
 import 'package:lotex/core/widgets/app_input.dart';
@@ -98,7 +99,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Помилка: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Помилка: ${humanError(e)}')));
     } finally {
       if (mounted) setState(() => _saving = false);
     }

@@ -12,42 +12,45 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-  # ... ваші існуючі пакети ...
-  google_sign_in: ^6.1.6
-  sign_in_with_apple: ^5.0.0
-  crypto: ^3.0.3 # Потрібно для Apple Sign In (генерація nonce)
-
-  # --- Саме ця версія потрібна твоєму Flutter ---
-  intl: 0.20.2
-
-  # --- Архітектура та Стан ---
-  flutter_riverpod: ^3.0.3
+  # --- State Management & Architecture (Riverpod + Hooks) ---
+  flutter_riverpod: ^2.4.9
+  hooks_riverpod: ^2.4.9
+  flutter_hooks: ^0.21.3+1
+  
+  # --- Data Class Generation (Freezed) ---
   freezed_annotation: ^3.1.0
-  json_annotation: ^4.9.0
-  uuid: ^4.3.0
+  json_annotation: ^4.8.1
   equatable: ^2.0.5
-  go_router: ^14.1.4
-  google_fonts: ^6.2.1
+
+  # --- Firebase (Backend) ---
+  firebase_core: ^4.3.0
+  firebase_auth: ^6.1.3
+  cloud_firestore: ^6.1.1
+  firebase_storage: ^13.0.5
+  google_sign_in: ^7.2.0
+
+  # --- UI & Utils ---
+  go_router: ^17.0.1  # Навігація
+  intl: ^0.20.2       # Форматування гривні та дат
+  google_fonts: ^6.1.0
+  flutter_svg: ^2.0.10+1
+  uuid: ^4.3.3        # Генерація ID
+  cached_network_image: ^3.3.1 # Кеш фото
+  shared_preferences: ^2.2.3
   image_picker: ^1.1.2
+  sign_in_with_apple: ^7.0.1
+  crypto: ^3.0.6
 
-  # --- Firebase ---
-  firebase_core: ^4.2.1
-  firebase_auth: ^6.1.2
-  cloud_firestore: ^6.1.0
-  firebase_storage: ^13.0.4
-
-  # --- Інше ---
-  cupertino_icons: ^1.0.6
-
-# Optional convenience
+  # --- Payments (Заготовка) ---
+  pay: ^2.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  build_runner: ^2.4.9
-  freezed: ^3.2.3
-  json_serializable: ^6.8.0
+  build_runner: ^2.4.8
+  freezed: ^3.2.4
+  json_serializable: ^6.7.1
 
 flutter:
   uses-material-design: true

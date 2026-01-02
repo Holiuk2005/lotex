@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// no-go_router import
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import 'package:lotex/core/widgets/app_button.dart';
-import '../../../auction/presentation/widgets/lotex_input.dart';
-import 'package:lotex/features/auth/presentation/providers/auth_state_provider.dart';
+import 'package:lotex/core/utils/human_error.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lotex/features/auth/data/repositories/presentation/providers/auth_state_provider.dart';
+import 'package:lotex/features/auction/presentation/widgets/lotex_input.dart'; // Використовуємо ваш віджет інпуту
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -26,20 +24,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     setState(() => _isLoading = true);
     
+    // Тут ми викликаємо метод реєстрації з контролера
+    // Увага: переконайтеся, що у вашому authController є метод signUp або register
     try {
       await ref.read(authControllerProvider.notifier).signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
       
-      // Якщо успішно - перенаправлення відбудеться автоматично через authStateChanges
+      if (mounted) {
+        context.go('/home'); // Після успіху йдемо на головну
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Помилка: ${e.toString().replaceAll('Exception: ', '')}"),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text('Помилка: ${humanError(e)}')),
         );
       }
     } finally {
@@ -51,54 +50,46 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Реєстрація")),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Створити акаунт',
-                  style: AppTextStyles.h1.copyWith(color: AppColors.primary600),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
-                
-                LotexInput(
-                  label: "Ім'я",
-                  hint: "Ваше ім'я",
-                  controller: _nameController,
-                  validator: (v) => v!.isEmpty ? "Введіть ім'я" : null,
-                ),
-                const SizedBox(height: 16),
-                
-                LotexInput(
-                  label: "Email",
-                  hint: "example@mail.com",
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (v) => v != null && v.contains('@') ? null : 'Введіть коректний email',
-                ),
-                const SizedBox(height: 16),
-                
-                LotexInput(
-                  label: "Пароль",
-                  hint: "******",
-                  obscureText: true,
-                  controller: _passwordController,
-                  maxLines: 1,
-                  validator: (v) => v!.length < 6 ? "Мінімум 6 символів" : null,
-                ),
-                const SizedBox(height: 32),
-                
-                AppButton.primary(
-                  label: _isLoading ? 'Зачекайте...' : 'ЗАРЕЄСТРУВАТИСЯ',
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+              LotexInput(
+                label: "Ім'я",
+                hint: "Ваше ім'я",
+                controller: _nameController,
+                validator: (v) => v!.isEmpty ? "Введіть ім'я" : null,
+              ),
+              const SizedBox(height: 16),
+              LotexInput(
+                label: "Email",
+                hint: "example@mail.com",
+                controller: _emailController,
+                validator: (v) => !v!.contains('@') ? "Некоректний email" : null,
+              ),
+              const SizedBox(height: 16),
+              LotexInput(
+                label: "Пароль",
+                hint: "******",
+                obscureText: true,
+                controller: _passwordController,
+                validator: (v) => v!.length < 6 ? "Мінімум 6 символів" : null,
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
                   onPressed: _isLoading ? null : _submit,
+                  child: _isLoading 
+                    ? const CircularProgressIndicator(color: Colors.white) 
+                    : const Text("ЗАРЕЄСТРУВАТИСЯ"),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

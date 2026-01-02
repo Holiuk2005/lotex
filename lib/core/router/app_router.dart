@@ -4,7 +4,11 @@ import 'package:go_router/go_router.dart';
 import '../../features/auction/domain/entities/auction_entity.dart';
 import '../../features/auction/presentation/pages/auction_details_screen.dart';
 import '../../features/auction/presentation/pages/create_auction_screen.dart';
+import '../../features/auction/presentation/pages/edit_auction_screen.dart';
 import '../../features/profile/presentation/pages/profile_screen.dart';
+import '../../features/profile/presentation/pages/settings_screen.dart';
+import '../../features/profile/presentation/pages/public_profile_screen.dart';
+import '../../features/auction/presentation/pages/shipping_screen.dart';
 import '../../features/auth/presentation/pages/login_screen.dart';
 import '../../features/profile/presentation/pages/register_screen.dart';
 import '../../features/main_wrapper/main_wrapper.dart';
@@ -56,7 +60,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             navigatorKey: _shellNavigatorProfileKey,
             routes: [
-              GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
+              GoRoute(
+                path: '/profile',
+                builder: (context, state) => const ProfileScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'settings',
+                    builder: (context, state) => const SettingsScreen(),
+                  ),
+                ],
+              ),
             ],
           ),
         ],
@@ -80,6 +93,33 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final auction = state.extra as AuctionEntity;
           return AuctionDetailsScreen(auction: auction);
+        },
+      ),
+
+      GoRoute(
+        path: '/auction/edit',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final auction = state.extra as AuctionEntity;
+          return EditAuctionScreen(auction: auction);
+        },
+      ),
+
+      GoRoute(
+        path: '/shipping/:auctionId',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final id = state.pathParameters['auctionId'] ?? '';
+          return ShippingScreen(auctionId: id);
+        },
+      ),
+
+      GoRoute(
+        path: '/user/:uid',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final id = state.pathParameters['uid'] ?? '';
+          return PublicProfileScreen(uid: id);
         },
       ),
     ],

@@ -23,7 +23,7 @@ class AuctionsScreen extends ConsumerWidget {
             itemBuilder: (_, i) => AuctionCard(
               auction: list[i],
               onTap: () {
-                // TODO: реализовать переход к деталям аукциона
+                // Реализовать переход к деталям аукциона позже.
               },
             ),
           );

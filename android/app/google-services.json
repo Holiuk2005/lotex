@@ -12,20 +12,7 @@
           "package_name": "com.example.lotex"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "823233113152-eblfsj3edhp7ug8evhocrnt1kqidp4tk.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.lotex",
-            "certificate_hash": "7a17cca00e6992cfe7c0da641d9d123b31129f67"
-          }
-        },
-        {
-          "client_id": "823233113152-iktaaoltbruf2o3uhmu0d3rjp80qnju1.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
           "current_key": "AIzaSyDHlPOLUuBt__ppa-TQtizFCjwNcQU0DNQ"
@@ -33,19 +20,7 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "823233113152-iktaaoltbruf2o3uhmu0d3rjp80qnju1.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "823233113152-i6uisql4eg8vfp7qu5i8u9r2lgt6d76h.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.example.lotex"
-              }
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

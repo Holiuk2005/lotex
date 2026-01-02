@@ -19,6 +19,7 @@ class CreateAuctionController extends AsyncNotifier<void> {
     required String title,
     required String description,
     required double startPrice,
+    double? buyoutPrice,
     required DateTime endDate,
     required XFile image, // <-- ВИКОРИСТОВУЄМО XFile (працює і на Web, і на телефоні)
   }) async {
@@ -30,6 +31,7 @@ class CreateAuctionController extends AsyncNotifier<void> {
         title: title,
         description: description,
         startPrice: startPrice,
+        buyoutPrice: buyoutPrice,
         endDate: endDate,
         imageFile: image, // Передаємо XFile далі
         sellerId: userId,
