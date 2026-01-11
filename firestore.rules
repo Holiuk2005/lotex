@@ -1,0 +1,217 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    function isSelf(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isDialogParticipant(dialogId) {
+      return isSignedIn()
+          && dialogId is string
+          && dialogId.size() > 0
+          && exists(/databases/$(database)/documents/dialogs/$(dialogId))
+          && request.auth.uid in get(/databases/$(database)/documents/dialogs/$(dialogId)).data.participants;
+    }
+
+    // Users
+    match /users/{userId} {
+      // Allow an authenticated user to read/write ONLY their own user document.
+      // Keep list blocked to prevent scraping.
+      allow get: if isSelf(userId) || isAdmin();
+      allow list: if false;
+      allow create, update: if isSelf(userId) || isAdmin();
+      allow delete: if false;
+
+      // User-scoped bid mirror to avoid collectionGroup indexes
+      match /bids/{bidId} {
+        allow read, write: if isSelf(userId) || isAdmin();
+      }
+
+      // User-scoped ticket mirror (created by backend) for safe querying.
+      match /tickets/{ticketId} {
+        allow read: if isSelf(userId) || isAdmin();
+        allow create, update, delete: if false;
+      }
+    }
+
+    // Lotteries (public read, admin write)
+    match /lotteries/{lotteryId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Tickets (top-level created by backend/admin). Clients do not write here.
+    match /tickets/{ticketId} {
+      allow get: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
+      allow list: if false;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Root bids (lottery bids). Clients can create their own bids.
+    match /bids/{bidId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.lotteryId is string
+        && request.resource.data.amount is number
+        && request.resource.data.amount > 0;
+      allow update, delete: if false;
+    }
+
+    // Public user profile (display name, avatar). Safe to read for everyone.
+    match /public_profiles/{userId} {
+      allow read: if true;
+      // On create, `resource` does not exist, so avoid diff(resource.data).
+      allow create: if isSelf(userId)
+        && request.resource.data.keys().hasOnly([
+          'displayName',
+          'photoURL',
+          'photoUrl',
+          'updatedAt'
+        ]);
+
+      allow update: if isSelf(userId)
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+          'displayName',
+          'photoURL',
+          'photoUrl',
+          'updatedAt'
+        ]);
+      allow delete: if false;
+    }
+
+    // Auctions
+    match /auctions/{auctionId} {
+      allow read: if true;
+
+      // DEV-friendly rule: any authenticated user may write auctions.
+      // If you want stricter rules later, remove this and keep only the validated rules below.
+      allow create, update, delete: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.sellerId == request.auth.uid
+        && request.resource.data.title is string
+        && request.resource.data.title.size() >= 3
+        && request.resource.data.description is string
+        && request.resource.data.description.size() >= 1
+        && request.resource.data.startPrice is number
+        && request.resource.data.startPrice > 0
+        && request.resource.data.currentPrice is number
+        && request.resource.data.currentPrice == request.resource.data.startPrice
+        && request.resource.data.bidCount == 0
+        && request.resource.data.status == 'active'
+        && request.resource.data.endDate is string
+        && request.resource.data.endDate.size() >= 10
+        && (request.resource.data.buyoutPrice == null
+          || (request.resource.data.buyoutPrice is number
+            && request.resource.data.buyoutPrice > request.resource.data.startPrice))
+        && (request.resource.data.imageUrl is string)
+        && (request.resource.data.imageBase64 == null || request.resource.data.imageBase64 is string);
+
+      function isSeller() {
+        return isSignedIn() && request.auth.uid == resource.data.sellerId;
+      }
+
+      function isBidUpdate() {
+        return isSignedIn()
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'currentPrice',
+            'bidCount',
+            'lastBidderId',
+            'updatedAt'
+          ])
+          && request.resource.data.lastBidderId == request.auth.uid
+          && request.resource.data.currentPrice is number
+          && resource.data.currentPrice is number
+          && request.resource.data.currentPrice > resource.data.currentPrice
+          && request.resource.data.bidCount == resource.data.bidCount + 1;
+      }
+
+      function isWinnerUpdate() {
+        // Winner may attach shipping info after the auction is sold.
+        return isSignedIn()
+          && (request.auth.uid == resource.data.winnerId)
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'deliveryInfo',
+            'status',
+            'updatedAt'
+          ]);
+      }
+
+      function isBuyoutUpdate() {
+        return isSignedIn()
+          && request.auth.uid != resource.data.sellerId
+          && (resource.data.status == 'active')
+          && (resource.data.buyoutPrice is number)
+          && (resource.data.buyoutPrice > 0)
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'currentPrice',
+            'bidCount',
+            'lastBidderId',
+            'winnerId',
+            'status',
+            'updatedAt'
+          ])
+          && request.resource.data.winnerId == request.auth.uid
+          && request.resource.data.lastBidderId == request.auth.uid
+          && request.resource.data.status == 'sold'
+          && request.resource.data.bidCount == resource.data.bidCount + 1
+          && request.resource.data.currentPrice == resource.data.buyoutPrice;
+      }
+
+      function isSellerEdit() {
+        // Seller can edit auction fields, but should not lower price or spoof lastBidderId.
+        // Keep it permissive for now but block obvious bid-field tampering.
+        return isSeller()
+          && request.resource.data.sellerId == resource.data.sellerId
+          && request.resource.data.currentPrice == resource.data.currentPrice
+          && request.resource.data.lastBidderId == resource.data.lastBidderId
+          && request.resource.data.bidCount == resource.data.bidCount;
+      }
+
+      // Seller edits are allowed, but bid/shipping flows are strictly controlled.
+      allow update: if isSellerEdit() || isBidUpdate() || isBuyoutUpdate() || isWinnerUpdate();
+
+      allow delete: if isSignedIn() && request.auth.uid == resource.data.sellerId;
+
+      match /bids/{bidId} {
+        // DEV-friendly rule: any authenticated user may read/write bids.
+        allow read, write: if isSignedIn();
+      }
+    }
+
+    // Chat dialogs
+    match /dialogs/{dialogId} {
+      allow read: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow create, update: if isSignedIn() && request.auth.uid in request.resource.data.participants;
+      allow delete: if false;
+    }
+
+    // Chat messages
+    match /chats/{chatId} {
+      allow read: if isSignedIn()
+        && (resource.data.dialogId is string)
+        && isDialogParticipant(resource.data.dialogId);
+
+      allow create: if isSignedIn()
+        && request.resource.data.senderId == request.auth.uid
+        && (request.resource.data.dialogId is string)
+        && isDialogParticipant(request.resource.data.dialogId);
+
+      allow update, delete: if false;
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

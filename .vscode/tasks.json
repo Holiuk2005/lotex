@@ -1,0 +1,63 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Firebase: Emulators (auth, firestore, storage)",
+      "type": "shell",
+      "command": "firebase",
+      "args": [
+        "emulators:start",
+        "--only",
+        "auth,firestore,storage"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Firebase: Deploy (rules + indexes + storage)",
+      "type": "shell",
+      "command": "firebase",
+      "args": [
+        "deploy",
+        "--only",
+        "firestore:rules,firestore:indexes,storage"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Run Chrome (use emulators)",
+      "type": "shell",
+      "command": "flutter",
+      "args": [
+        "run",
+        "-d",
+        "chrome",
+        "--dart-define=USE_FIREBASE_EMULATORS=true"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Run Chrome (real Firebase)",
+      "type": "shell",
+      "command": "flutter",
+      "args": [
+        "run",
+        "-d",
+        "chrome"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

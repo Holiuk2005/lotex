@@ -1,0 +1,54 @@
+{
+	"emulators": {
+		"auth": {
+			"port": 9099
+		},
+		"functions": {
+			"port": 5001
+		},
+		"firestore": {
+			"port": 8080
+		},
+		"storage": {
+			"port": 9199
+		},
+		"ui": {
+			"enabled": true,
+			"port": 4000
+		},
+		"singleProjectMode": true
+	},
+	"flutter": {
+		"platforms": {
+			"android": {
+				"default": {
+					"projectId": "lotex-4890a",
+					"appId": "1:823233113152:android:3a10dcde54334bd2b883a5",
+					"fileOutput": "android/app/google-services.json"
+				}
+			},
+			"dart": {
+				"lib/firebase_options.dart": {
+					"projectId": "lotex-4890a",
+					"configurations": {
+						"android": "1:823233113152:android:3a10dcde54334bd2b883a5",
+						"ios": "1:823233113152:ios:47970db92db8909fb883a5",
+						"macos": "1:823233113152:ios:47970db92db8909fb883a5",
+						"web": "1:823233113152:web:6565f42bcee8b4acb883a5",
+						"windows": "1:823233113152:web:68c71885e4edb69db883a5"
+					}
+				}
+			}
+		}
+	},
+	"firestore": {
+		"rules": "firestore.rules",
+		"indexes": "firestore.indexes.json"
+	},
+	"functions": {
+		"source": "functions"
+	},
+	"storage": {
+		"rules": "storage.rules"
+	}
+}
