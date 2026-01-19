@@ -8,6 +8,9 @@ import 'package:lotex/core/widgets/lotex_app_bar.dart';
 import 'package:lotex/core/widgets/lotex_background.dart';
 import 'package:lotex/features/auction/presentation/widgets/branch_picker_sheet.dart';
 import 'package:lotex/features/auction/presentation/widgets/city_search_sheet.dart';
+import 'package:lotex/features/auction/presentation/widgets/payment_breakdown_card.dart';
+import 'package:lotex/core/utils/price_calculator.dart';
+import 'package:lotex/features/orders/domain/order_entity.dart';
 import 'package:lotex/services/logistics_service.dart';
 
 class OrderCheckoutScreen extends StatefulWidget {
@@ -43,6 +46,9 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     decimalDigits: 0,
   );
 
+  PriceBreakdown get _breakdown =>
+      PriceCalculator.calculateBreakdown(widget.itemPrice, _shippingCost);
+
   @override
   void initState() {
     super.initState();
@@ -58,7 +64,6 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     super.dispose();
   }
 
-  double get _total => widget.itemPrice + _shippingCost;
 
   Future<City?> _ensureSenderCity() async {
     if (_senderCity != null) return _senderCity;
@@ -179,25 +184,23 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
 
       final uid = FirebaseAuth.instance.currentUser?.uid;
       final orderRef = FirebaseFirestore.instance.collection('orders').doc();
-      await orderRef.set(<String, dynamic>{
-        'id': orderRef.id,
-        'userId': uid,
-        'itemPrice': widget.itemPrice,
-        'shippingCost': _shippingCost,
-        'total': _total,
-        'senderCityName': senderCity.name,
-        'senderCityRef': senderCity.ref,
-        'receiverCityName': receiverCity.name,
-        'receiverCityRef': receiverCity.ref,
-        'receiverBranchName': receiverBranch.description,
-        'receiverBranchRef': receiverBranch.ref,
-        'senderRef': senderRef,
-        'receiverRef': receiverRef,
-        'ttn': ttn,
-        'status': 'created',
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+
+      final order = OrderEntity(
+        id: orderRef.id,
+        userId: uid,
+        breakdown: _breakdown,
+        senderCityName: senderCity.name,
+        senderCityRef: senderCity.ref,
+        receiverCityName: receiverCity.name,
+        receiverCityRef: receiverCity.ref,
+        receiverBranchName: receiverBranch.description,
+        receiverBranchRef: receiverBranch.ref,
+        senderRef: senderRef,
+        receiverRef: receiverRef,
+        ttn: ttn,
+      );
+
+      await orderRef.set(order.toDocument());
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -330,60 +333,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                     ),
               ),
               const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: surface,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: border),
-                ),
-                child: Column(
-                  children: [
-                    _BreakdownRow(
-                      label: 'Item Price',
-                      valueText: _uah.format(widget.itemPrice),
-                    ),
-                    const SizedBox(height: 10),
-                    _BreakdownRow(
-                      label: 'Delivery Cost',
-                      valueText: _uah.format(_shippingCost),
-                      leading: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: LotexUiColors.neonOrange.withAlpha((0.18 * 255).round()),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.local_shipping_outlined,
-                          size: 16,
-                          color: LotexUiColors.neonOrange,
-                        ),
-                      ),
-                      valueStyle: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: LotexUiColors.neonOrange,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Divider(color: Colors.white.withAlpha((0.10 * 255).round())),
-                    const SizedBox(height: 14),
-                    _BreakdownRow(
-                      label: 'Total Payable',
-                      valueText: _uah.format(_total),
-                      labelStyle: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
-                      valueStyle: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              PaymentBreakdownCard(breakdown: _breakdown),
             ],
           ),
         ],
@@ -423,53 +373,6 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _BreakdownRow extends StatelessWidget {
-  final String label;
-  final String valueText;
-  final Widget? leading;
-  final TextStyle? labelStyle;
-  final TextStyle? valueStyle;
-
-  const _BreakdownRow({
-    required this.label,
-    required this.valueText,
-    this.leading,
-    this.labelStyle,
-    this.valueStyle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final defaultLabel = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Colors.white.withAlpha((0.78 * 255).round()),
-          fontWeight: FontWeight.w700,
-        );
-    final defaultValue = Theme.of(context).textTheme.titleMedium?.copyWith(
-          color: Colors.white,
-          fontWeight: FontWeight.w900,
-        );
-
-    return Row(
-      children: [
-        if (leading != null) ...[
-          leading!,
-          const SizedBox(width: 10),
-        ],
-        Expanded(
-          child: Text(
-            label,
-            style: labelStyle ?? defaultLabel,
-          ),
-        ),
-        Text(
-          valueText,
-          style: valueStyle ?? defaultValue,
-        ),
-      ],
     );
   }
 }

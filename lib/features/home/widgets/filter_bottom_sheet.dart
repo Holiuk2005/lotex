@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:lotex/features/home/models/filter_state.dart';
 import 'package:lotex/services/category_seed_service.dart';
@@ -20,6 +23,10 @@ class FilterBottomSheet extends StatefulWidget {
 class _FilterBottomSheetState extends State<FilterBottomSheet> {
   late FilterState _state;
 
+  late final TextEditingController _minPriceController;
+  late final TextEditingController _maxPriceController;
+  Timer? _priceDebounce;
+
   static const double _minPrice = 0;
   static const double _maxPrice = 100000;
 
@@ -27,6 +34,71 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   void initState() {
     super.initState();
     _state = widget.initial;
+    _minPriceController = TextEditingController(
+      text: _state.priceRange.start.round().toString(),
+    );
+    _maxPriceController = TextEditingController(
+      text: _state.priceRange.end.round().toString(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _priceDebounce?.cancel();
+    _minPriceController.dispose();
+    _maxPriceController.dispose();
+    super.dispose();
+  }
+
+  void _setPriceRange(RangeValues values, {bool syncText = true}) {
+    var start = values.start;
+    var end = values.end;
+
+    if (start < _minPrice) start = _minPrice;
+    if (end > _maxPrice) end = _maxPrice;
+    if (start > end) end = start;
+
+    final next = RangeValues(start, end);
+
+    setState(() {
+      _state = _state.copyWith(priceRange: next);
+    });
+
+    if (syncText) {
+      final startText = start.round().toString();
+      final endText = end.round().toString();
+
+      if (_minPriceController.text != startText) {
+        _minPriceController.text = startText;
+      }
+      if (_maxPriceController.text != endText) {
+        _maxPriceController.text = endText;
+      }
+    }
+  }
+
+  double? _parseMoney(String raw) {
+    final s = raw.trim().replaceAll(' ', '').replaceAll(',', '.');
+    if (s.isEmpty) return null;
+    return double.tryParse(s);
+  }
+
+  void _onMinChanged(String raw) {
+    _priceDebounce?.cancel();
+    _priceDebounce = Timer(const Duration(milliseconds: 250), () {
+      final min = _parseMoney(raw);
+      if (min == null) return;
+      _setPriceRange(RangeValues(min, _state.priceRange.end), syncText: false);
+    });
+  }
+
+  void _onMaxChanged(String raw) {
+    _priceDebounce?.cancel();
+    _priceDebounce = Timer(const Duration(milliseconds: 250), () {
+      final max = _parseMoney(raw);
+      if (max == null) return;
+      _setPriceRange(RangeValues(_state.priceRange.start, max), syncText: false);
+    });
   }
 
   void _reset() {
@@ -37,6 +109,9 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         sortBy: 'newest',
       );
     });
+
+    _minPriceController.text = _minPrice.round().toString();
+    _maxPriceController.text = _maxPrice.round().toString();
   }
 
   @override
@@ -115,11 +190,62 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             const SizedBox(height: 6),
             Row(
               children: [
-                Text('${_state.priceRange.start.round()} ₴'),
-                const Spacer(),
-                Text('${_state.priceRange.end.round()} ₴'),
+                Expanded(
+                  child: TextField(
+                    controller: _minPriceController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9\s\.,]')),
+                    ],
+                    onChanged: _onMinChanged,
+                    onEditingComplete: () {
+                      _priceDebounce?.cancel();
+                      final min = _parseMoney(_minPriceController.text);
+                      if (min == null) {
+                        _minPriceController.text = _state.priceRange.start.round().toString();
+                        FocusScope.of(context).unfocus();
+                        return;
+                      }
+                      _setPriceRange(RangeValues(min, _state.priceRange.end));
+                      FocusScope.of(context).unfocus();
+                    },
+                    decoration: const InputDecoration(
+                      labelText: 'Мін',
+                      suffixText: '₴',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: _maxPriceController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9\s\.,]')),
+                    ],
+                    onChanged: _onMaxChanged,
+                    onEditingComplete: () {
+                      _priceDebounce?.cancel();
+                      final max = _parseMoney(_maxPriceController.text);
+                      if (max == null) {
+                        _maxPriceController.text = _state.priceRange.end.round().toString();
+                        FocusScope.of(context).unfocus();
+                        return;
+                      }
+                      _setPriceRange(RangeValues(_state.priceRange.start, max));
+                      FocusScope.of(context).unfocus();
+                    },
+                    decoration: const InputDecoration(
+                      labelText: 'Макс',
+                      suffixText: '₴',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
               ],
             ),
+            const SizedBox(height: 10),
             RangeSlider(
               values: _state.priceRange,
               min: _minPrice,
@@ -129,7 +255,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 '${_state.priceRange.start.round()} ₴',
                 '${_state.priceRange.end.round()} ₴',
               ),
-              onChanged: (v) => setState(() => _state = _state.copyWith(priceRange: v)),
+              onChanged: (v) => _setPriceRange(v),
             ),
 
             const SizedBox(height: 12),
