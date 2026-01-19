@@ -29,12 +29,12 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyCXIqFFRDcoggp42HumK_oOGc8cAbpGVs0',
-    appId: '1:823233113152:web:6565f42bcee8b4acb883a5',
+    appId: '1:823233113152:web:e55363b4182bac51b883a5',
     messagingSenderId: '823233113152',
     projectId: 'lotex-4890a',
     authDomain: 'lotex-4890a.firebaseapp.com',
     storageBucket: 'lotex-4890a.firebasestorage.app',
-    measurementId: 'G-NP3NFWETVL',
+    measurementId: 'G-WWG4VZ75W2',
   );
 
   // ОСЬ ТУТ ВСТАВТЕ ДАНІ З FIREBASE CONSOLE:

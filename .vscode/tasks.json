@@ -38,10 +38,17 @@
         "run",
         "-d",
         "chrome",
+        "--web-browser-flag=--no-first-run",
+        "--web-browser-flag=--no-default-browser-check",
+        "--web-browser-flag=--disable-extensions",
         "--dart-define=USE_FIREBASE_EMULATORS=true"
       ],
       "options": {
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "CHROME_EXECUTABLE": "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
+          "PATH": "C:\\Program Files\\Git\\cmd;${env:USERPROFILE}\\flutter\\bin;${env:PATH}"
+        }
       },
       "problemMatcher": []
     },
@@ -52,10 +59,17 @@
       "args": [
         "run",
         "-d",
-        "chrome"
+        "chrome",
+        "--web-browser-flag=--no-first-run",
+        "--web-browser-flag=--no-default-browser-check",
+        "--web-browser-flag=--disable-extensions"
       ],
       "options": {
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "CHROME_EXECUTABLE": "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
+          "PATH": "C:\\Program Files\\Git\\cmd;${env:USERPROFILE}\\flutter\\bin;${env:PATH}"
+        }
       },
       "problemMatcher": []
     }

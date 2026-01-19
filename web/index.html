@@ -29,10 +29,217 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
+  <meta name="theme-color" content="#8B5CF6" />
+
+  <style>
+    :root {
+      --lotex-primary: #8B5CF6;
+      --lotex-secondary: #2563EB;
+      --lotex-bg-light: #ffffff;
+      --lotex-bg-dark: #020617;
+      --lotex-text-light: #0F172A;
+      --lotex-text-dark: #E5E7EB;
+      --lotex-muted-light: #334155;
+      --lotex-muted-dark: #CBD5E1;
+      --lotex-card-dark: rgba(15, 23, 42, 0.60);
+      --lotex-border-dark: rgba(255, 255, 255, 0.08);
+      --lotex-border-light: rgba(0, 0, 0, 0.10);
+    }
+
+    body {
+      margin: 0;
+      background: var(--lotex-bg-light);
+    }
+
+    #lotex-splash {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 9999;
+      background:
+        radial-gradient(1200px 600px at 20% 10%, rgba(139, 92, 246, 0.22), transparent 60%),
+        radial-gradient(900px 500px at 80% 25%, rgba(37, 99, 235, 0.18), transparent 55%),
+        linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(250, 250, 252, 1) 100%);
+      transition: opacity 320ms cubic-bezier(0.22, 1, 0.36, 1), transform 320ms cubic-bezier(0.22, 1, 0.36, 1), filter 320ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    #lotex-splash .card {
+      width: min(420px, 100%);
+      border-radius: 18px;
+      border: 1px solid var(--lotex-border-light);
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: 22px 22px 18px;
+      box-shadow: 0 20px 50px rgba(2, 6, 23, 0.12);
+    }
+
+    #lotex-splash .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    #lotex-splash .mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--lotex-primary), var(--lotex-secondary));
+      box-shadow: 0 10px 24px rgba(139, 92, 246, 0.28);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #lotex-splash .logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    #lotex-splash .title {
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      font-size: 22px;
+      line-height: 1.1;
+      color: var(--lotex-text-light);
+    }
+
+    #lotex-splash .subtitle {
+      margin: 0 0 16px;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      font-size: 14px;
+      color: var(--lotex-muted-light);
+    }
+
+    #lotex-splash .progress {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #lotex-splash .spinner {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 2px solid rgba(15, 23, 42, 0.12);
+      border-top-color: var(--lotex-primary);
+      animation: lotexSpin 0.9s linear infinite;
+    }
+
+    #lotex-splash .bar {
+      height: 10px;
+      flex: 1;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.08);
+      overflow: hidden;
+      position: relative;
+    }
+
+    #lotex-splash .bar::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      width: 45%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--lotex-primary), var(--lotex-secondary));
+      animation: lotexBar 1.25s ease-in-out infinite;
+    }
+
+    #lotex-splash.fade {
+      opacity: 0;
+      transform: translateY(6px);
+      filter: blur(6px);
+      pointer-events: none;
+    }
+
+    @keyframes lotexSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes lotexBar {
+      0% { transform: translateX(-10%); }
+      50% { transform: translateX(120%); }
+      100% { transform: translateX(220%); }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body { background: var(--lotex-bg-dark); }
+
+      #lotex-splash {
+        background:
+          radial-gradient(1200px 600px at 20% 10%, rgba(139, 92, 246, 0.26), transparent 60%),
+          radial-gradient(900px 500px at 80% 25%, rgba(37, 99, 235, 0.20), transparent 55%),
+          linear-gradient(180deg, rgba(2, 6, 23, 1) 0%, rgba(2, 6, 23, 1) 100%);
+      }
+
+      #lotex-splash .card {
+        background: var(--lotex-card-dark);
+        border-color: var(--lotex-border-dark);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.40);
+      }
+
+      #lotex-splash .title { color: var(--lotex-text-dark); }
+      #lotex-splash .subtitle { color: var(--lotex-muted-dark); }
+      #lotex-splash .spinner {
+        border-color: rgba(255, 255, 255, 0.14);
+        border-top-color: var(--lotex-primary);
+      }
+      #lotex-splash .bar { background: rgba(255, 255, 255, 0.12); }
+    }
+  </style>
+
   <title>lotex</title>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <div id="lotex-splash" role="status" aria-live="polite">
+    <div class="card">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <img class="logo" src="assets/branding/logo.png" alt="" />
+        </div>
+        <div class="title">Lotex</div>
+      </div>
+      <p class="subtitle">Завантаження сайту…</p>
+      <div class="progress">
+        <div class="spinner" aria-hidden="true"></div>
+        <div class="bar" aria-hidden="true"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var splash = document.getElementById('lotex-splash');
+      if (!splash) return;
+
+      function hideSplash() {
+        if (!splash) return;
+        splash.classList.add('fade');
+        window.setTimeout(function () {
+          if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
+          splash = null;
+        }, 260);
+      }
+
+      // Flutter fires this after the first frame is rendered.
+      window.addEventListener('flutter-first-frame', hideSplash);
+
+      // Fallback: don't block forever if something goes wrong.
+      window.setTimeout(hideSplash, 30000);
+    })();
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
