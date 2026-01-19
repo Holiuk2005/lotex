@@ -12,6 +12,7 @@ import 'package:lotex/features/auction/presentation/widgets/payment_breakdown_ca
 import 'package:lotex/core/utils/price_calculator.dart';
 import 'package:lotex/features/orders/domain/order_entity.dart';
 import 'package:lotex/services/logistics_service.dart';
+import 'package:lotex/core/i18n/lotex_i18n.dart';
 
 class OrderCheckoutScreen extends StatefulWidget {
   final double itemPrice;
@@ -40,11 +41,27 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   City? _receiverCity;
   Branch? _receiverBranch;
 
-  final _uah = NumberFormat.currency(
-    locale: 'uk_UA',
-    symbol: '₴',
-    decimalDigits: 0,
-  );
+  LotexLanguage _langOf(BuildContext context) {
+    return Localizations.localeOf(context).languageCode == 'uk'
+        ? LotexLanguage.uk
+        : LotexLanguage.en;
+  }
+
+  String _localeNameOf(BuildContext context) {
+    return _langOf(context) == LotexLanguage.uk ? 'uk_UA' : 'en_US';
+  }
+
+  String _tr(BuildContext context, String key) {
+    return LotexI18n.tr(_langOf(context), key);
+  }
+
+  NumberFormat _uah(BuildContext context, {int decimalDigits = 0}) {
+    return NumberFormat.currency(
+      locale: _localeNameOf(context),
+      symbol: '₴',
+      decimalDigits: decimalDigits,
+    );
+  }
 
   PriceBreakdown get _breakdown =>
       PriceCalculator.calculateBreakdown(widget.itemPrice, _shippingCost);
@@ -93,7 +110,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     final city = _receiverCity;
     if (city == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Спочатку оберіть місто.')),
+        SnackBar(content: Text(_tr(context, 'checkoutPickCityFirst'))),
       );
       return;
     }
@@ -118,7 +135,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     final receiverCity = _receiverCity;
     if (receiverCity == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Оберіть місто отримувача.')),
+        SnackBar(content: Text(_tr(context, 'checkoutPickReceiverCity'))),
       );
       return;
     }
@@ -127,7 +144,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     if (senderCity == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Не вдалося визначити місто відправника (Київ).')),
+        SnackBar(content: Text(_tr(context, 'checkoutSenderCityFailed'))),
       );
       return;
     }
@@ -148,7 +165,12 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Вартість доставки оновлено: ${_uah.format(cost)}')),
+      SnackBar(
+        content: Text(
+          _tr(context, 'checkoutShippingUpdated')
+              .replaceAll('{price}', _uah(context).format(cost)),
+        ),
+      ),
     );
   }
 
@@ -160,7 +182,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
 
     if (receiverCity == null || receiverBranch == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Оберіть місто та відділення.')),
+        SnackBar(content: Text(_tr(context, 'checkoutPickCityAndBranch'))),
       );
       return;
     }
@@ -169,7 +191,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     try {
       final senderCity = await _ensureSenderCity();
       if (senderCity == null) {
-        throw Exception('Sender city (Kyiv) not resolved');
+        throw Exception(_tr(context, 'checkoutSenderCityFailed'));
       }
 
       // For now we store refs we have (City + Warehouse Ref).
@@ -204,7 +226,11 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('TTN: $ttn (збережено в orders)')),
+        SnackBar(
+          content: Text(
+            _tr(context, 'checkoutTtnSaved').replaceAll('{ttn}', ttn),
+          ),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
@@ -246,6 +272,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lang = _langOf(context);
 
     final surface = isDark
         ? Colors.white.withAlpha((0.05 * 255).round())
@@ -255,7 +282,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
         : Colors.black.withAlpha((0.06 * 255).round());
 
     return Scaffold(
-      appBar: const LotexAppBar(titleText: 'Оформлення замовлення'),
+      appBar: LotexAppBar(titleText: LotexI18n.tr(lang, 'checkoutTitle')),
       body: Stack(
         children: [
           const LotexBackground(),
@@ -263,7 +290,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
             padding: const EdgeInsets.fromLTRB(16, 18, 16, 120),
             children: [
               Text(
-                'Delivery Details',
+                LotexI18n.tr(lang, 'shippingTitle'),
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
@@ -283,8 +310,11 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                       controller: _cityController,
                       readOnly: true,
                       onTap: _pickReceiverCity,
-                      decoration: _inputDecoration('City', icon: Icons.location_city).copyWith(
-                        hintText: 'Оберіть місто',
+                      decoration: _inputDecoration(
+                        LotexI18n.tr(lang, 'shippingCityLabel'),
+                        icon: Icons.location_city,
+                      ).copyWith(
+                        hintText: LotexI18n.tr(lang, 'shippingCityHint'),
                       ),
                       textInputAction: TextInputAction.next,
                     ),
@@ -293,8 +323,13 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                       controller: _branchController,
                       readOnly: true,
                       onTap: _pickReceiverBranch,
-                      decoration: _inputDecoration('Branch', icon: Icons.store_mall_directory_outlined).copyWith(
-                        hintText: _receiverCity == null ? 'Спочатку оберіть місто' : 'Оберіть відділення',
+                      decoration: _inputDecoration(
+                        LotexI18n.tr(lang, 'checkoutBranchLabel'),
+                        icon: Icons.store_mall_directory_outlined,
+                      ).copyWith(
+                        hintText: _receiverCity == null
+                            ? LotexI18n.tr(lang, 'checkoutPickCityFirst')
+                            : LotexI18n.tr(lang, 'checkoutPickBranch'),
                       ),
                       textInputAction: TextInputAction.done,
                     ),
@@ -305,8 +340,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                       child: OutlinedButton.icon(
                         onPressed: _calculateDelivery,
                         icon: const Icon(Icons.local_shipping_outlined, size: 18),
-                        label: const Text(
-                          'Calculate Delivery',
+                        label: Text(
+                          LotexI18n.tr(lang, 'checkoutCalculateDelivery'),
                           style: TextStyle(fontWeight: FontWeight.w800),
                         ),
                         style: OutlinedButton.styleFrom(
@@ -326,7 +361,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
               ),
               const SizedBox(height: 18),
               Text(
-                'Payment Breakdown',
+                LotexI18n.tr(lang, 'paymentSummaryTitle'),
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
@@ -365,7 +400,9 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                   ),
                 ),
                 child: Text(
-                  _isSubmitting ? 'Processing…' : 'Buy & Generate TTN',
+                  _isSubmitting
+                      ? LotexI18n.tr(lang, 'pleaseWait')
+                      : LotexI18n.tr(lang, 'checkoutBuyGenerateTtn'),
                   style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
                 ),
               ),

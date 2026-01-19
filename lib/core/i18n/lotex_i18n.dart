@@ -114,6 +114,23 @@ class LotexI18n {
       'reset': 'Reset',
       'apply': 'Apply',
 
+      // Checkout (order)
+      'checkoutTitle': 'Checkout',
+      'checkoutBranchLabel': 'Branch',
+      'checkoutPickCityFirst': 'Please choose a city first.',
+      'checkoutPickReceiverCity': 'Choose recipient city.',
+      'checkoutPickBranch': 'Choose a branch',
+      'checkoutCalculateDelivery': 'Calculate delivery',
+      'checkoutSenderCityFailed': 'Failed to resolve sender city (Kyiv).',
+      'checkoutShippingUpdated': 'Shipping cost updated: {price}',
+      'checkoutPickCityAndBranch': 'Choose city and branch.',
+      'checkoutBuyGenerateTtn': 'Buy & generate TTN',
+      'checkoutTtnSaved': 'TTN: {ttn} (saved in orders)',
+
+      // Fees
+      'serviceFee2': 'Service fee (2%)',
+      'buyerProtectionFee': 'Buyer protection fee',
+
       // Payment (checkout)
       'paymentTitle': 'Summary & payment',
       'paymentMethodTitle': 'Payment method',
@@ -397,6 +414,23 @@ class LotexI18n {
       'saveCard': 'Зберегти картку',
       'reset': 'Скинути',
       'apply': 'Застосувати',
+
+      // Checkout (order)
+      'checkoutTitle': 'Оформлення замовлення',
+      'checkoutBranchLabel': 'Відділення',
+      'checkoutPickCityFirst': 'Спочатку оберіть місто.',
+      'checkoutPickReceiverCity': 'Оберіть місто отримувача.',
+      'checkoutPickBranch': 'Оберіть відділення',
+      'checkoutCalculateDelivery': 'Розрахувати доставку',
+      'checkoutSenderCityFailed': 'Не вдалося визначити місто відправника (Київ).',
+      'checkoutShippingUpdated': 'Вартість доставки оновлено: {price}',
+      'checkoutPickCityAndBranch': 'Оберіть місто та відділення.',
+      'checkoutBuyGenerateTtn': 'Купити та згенерувати ТТН',
+      'checkoutTtnSaved': 'ТТН: {ttn} (збережено в orders)',
+
+      // Fees
+      'serviceFee2': 'Сервісний збір (2%)',
+      'buyerProtectionFee': 'Збір захисту покупця',
 
       // Payment (checkout)
       'paymentTitle': 'Підсумок і оплата',

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:lotex/core/utils/price_calculator.dart';
+import 'package:lotex/core/i18n/lotex_i18n.dart';
 
 class PaymentBreakdownCard extends StatelessWidget {
   final PriceBreakdown breakdown;
@@ -14,6 +15,10 @@ class PaymentBreakdownCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lang = Localizations.localeOf(context).languageCode == 'uk'
+        ? LotexLanguage.uk
+        : LotexLanguage.en;
+    final localeName = lang == LotexLanguage.uk ? 'uk_UA' : 'en_US';
 
     final surface = isDark
         ? Colors.white.withAlpha((0.05 * 255).round())
@@ -23,7 +28,7 @@ class PaymentBreakdownCard extends StatelessWidget {
         : Colors.black.withAlpha((0.06 * 255).round());
 
     final uah2 = NumberFormat.currency(
-      locale: 'uk_UA',
+      locale: localeName,
       symbol: '₴',
       decimalDigits: 2,
     );
@@ -38,12 +43,12 @@ class PaymentBreakdownCard extends StatelessWidget {
       child: Column(
         children: [
           _Row(
-            label: 'Item Price',
+            label: LotexI18n.tr(lang, 'paymentLotPrice'),
             valueText: uah2.format(breakdown.subtotal),
           ),
           const SizedBox(height: 10),
           _Row(
-            label: 'Shipping',
+            label: LotexI18n.tr(lang, 'delivery'),
             valueText: uah2.format(breakdown.shipping),
           ),
           const SizedBox(height: 10),
@@ -52,7 +57,7 @@ class PaymentBreakdownCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Service Fee (2%)',
+                  LotexI18n.tr(lang, 'serviceFee2'),
                   style: TextStyle(
                     color: Colors.white.withAlpha((0.62 * 255).round()),
                     fontWeight: FontWeight.w700,
@@ -60,7 +65,7 @@ class PaymentBreakdownCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Tooltip(
-                  message: 'Buyer protection fee',
+                  message: LotexI18n.tr(lang, 'buyerProtectionFee'),
                   child: Icon(
                     Icons.info_outline,
                     size: 16,
@@ -79,7 +84,7 @@ class PaymentBreakdownCard extends StatelessWidget {
           Divider(color: Colors.white.withAlpha((0.10 * 255).round())),
           const SizedBox(height: 14),
           _Row(
-            label: 'Total to Pay',
+            label: LotexI18n.tr(lang, 'paymentToPay'),
             valueText: uah2.format(breakdown.total),
             labelStyle: const TextStyle(
               fontWeight: FontWeight.w900,

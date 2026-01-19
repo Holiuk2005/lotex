@@ -11,7 +11,10 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:lotex/core/router/app_router.dart';
+import 'package:lotex/core/i18n/language_provider.dart';
+import 'package:lotex/core/i18n/lotex_i18n.dart';
 import 'package:lotex/core/theme/app_colors.dart';
 import 'package:lotex/core/theme/app_theme.dart';
 import 'package:lotex/core/theme/theme_manager.dart';
@@ -404,6 +407,17 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    final lang = ref.watch(lotexLanguageProvider);
+
+    final locale = switch (lang) {
+      LotexLanguage.uk => const Locale('uk', 'UA'),
+      LotexLanguage.en => const Locale('en', 'US'),
+    };
+
+    Intl.defaultLocale = switch (lang) {
+      LotexLanguage.uk => 'uk_UA',
+      LotexLanguage.en => 'en_US',
+    };
 
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: ThemeManager.mode,
@@ -415,6 +429,7 @@ class MyApp extends ConsumerWidget {
           darkTheme: AppTheme.dark(),
           themeMode: mode,
           routerConfig: router,
+          locale: locale,
           builder: (context, child) {
             return _AuthGate(child: child);
           },
@@ -424,8 +439,8 @@ class MyApp extends ConsumerWidget {
             GlobalCupertinoLocalizations.delegate,
           ],
           supportedLocales: const [
-            Locale('uk'),
-            Locale('en'),
+            Locale('uk', 'UA'),
+            Locale('en', 'US'),
           ],
         );
       },

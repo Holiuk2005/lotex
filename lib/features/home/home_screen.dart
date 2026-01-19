@@ -158,6 +158,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   final isSubscribed = selectedCategoryId != null && subs.contains(selectedCategoryId);
 
                   final filterRow = _FilterRow(
+                    lang: lang,
                     selected: _filter,
                     onSelected: (v) => setState(() => _filter = v),
                     onOpenFilters: _openFilterSheet,
@@ -250,6 +251,9 @@ class _HeroBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Localizations.localeOf(context).languageCode == 'uk'
+        ? LotexLanguage.uk
+        : LotexLanguage.en;
     final titleStyle = Theme.of(context).textTheme.headlineLarge?.copyWith(
           fontWeight: FontWeight.w800,
           height: 1.05,
@@ -265,12 +269,12 @@ class _HeroBlock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Discover Rare', style: titleStyle),
+        Text(LotexI18n.tr(lang, 'discoverRare'), style: titleStyle),
         const SizedBox(height: 2),
         ShaderMask(
           shaderCallback: (rect) => LotexUiGradients.heroText.createShader(rect),
           blendMode: BlendMode.srcIn,
-          child: Text('Digital Artifacts', style: titleStyle),
+          child: Text(LotexI18n.tr(lang, 'digitalArtifacts'), style: titleStyle),
         ),
       ],
     );
@@ -278,6 +282,7 @@ class _HeroBlock extends StatelessWidget {
 }
 
 class _FilterRow extends StatelessWidget {
+  final LotexLanguage lang;
   final String selected;
   final ValueChanged<String> onSelected;
   final VoidCallback? onOpenFilters;
@@ -285,6 +290,7 @@ class _FilterRow extends StatelessWidget {
   final Widget? categoryAction;
 
   const _FilterRow({
+    required this.lang,
     required this.selected,
     required this.onSelected,
     this.onOpenFilters,
@@ -294,10 +300,10 @@ class _FilterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const tabs = [
-      ('live', 'Live Auctions'),
-      ('upcoming', 'Upcoming'),
-      ('ended', 'Ended'),
+    final tabs = [
+      ('live', LotexI18n.tr(lang, 'liveAuctions')),
+      ('upcoming', LotexI18n.tr(lang, 'upcoming')),
+      ('ended', LotexI18n.tr(lang, 'ended')),
     ];
 
     return SingleChildScrollView(
