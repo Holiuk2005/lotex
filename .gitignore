@@ -11,7 +11,7 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
-backend/node_modules/
+
 # Local Firebase/JS tooling artifacts
 .firebase/
 
@@ -22,7 +22,7 @@ backend/node_modules/
 *.ipr
 *.iws
 .idea/
-scripts/node_modules/
+functions/node_modules/
 
 
 # The .vscode folder contains launch configuration and tasks you configure in

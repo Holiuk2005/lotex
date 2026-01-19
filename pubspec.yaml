@@ -54,6 +54,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_native_splash: ^2.4.6
   build_runner: ^2.4.8
   freezed: ^3.2.4
   json_serializable: ^6.7.1
@@ -62,3 +63,17 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
+
+flutter_native_splash:
+  # Native splash для Android/iOS (до першого кадру Flutter).
+  color: "#FFFFFF"
+  color_dark: "#020617"
+  image: assets/branding/logo.png
+  image_dark: assets/branding/logo.png
+  android: true
+  ios: true
+  web: false
+  android_12:
+    color: "#FFFFFF"
+    color_dark: "#020617"
+    image: assets/branding/logo.png
