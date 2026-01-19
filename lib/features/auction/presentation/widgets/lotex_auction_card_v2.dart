@@ -8,9 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/i18n/language_provider.dart';
 import '../../../../core/i18n/lotex_i18n.dart';
 import '../../../../core/theme/lotex_ui_tokens.dart';
-import '../../../../core/utils/now_ticker_provider.dart';
 import '../../../favorites/presentation/providers/favorites_provider.dart';
 import '../../domain/entities/auction_entity.dart';
+import 'auction_timer.dart';
 
 class LotexAuctionCardV2 extends ConsumerStatefulWidget {
   final AuctionEntity auction;
@@ -59,9 +59,6 @@ class _LotexAuctionCardV2State extends ConsumerState<LotexAuctionCardV2> {
   Widget build(BuildContext context) {
     final lang = ref.watch(lotexLanguageProvider);
     final auction = widget.auction;
-    final now = ref.watch(nowTickerProvider).value ?? DateTime.now();
-    final timeLeft = auction.endDate.difference(now);
-    final progress = _progressFromTimeLeft(timeLeft);
     final isFavorite = ref.watch(favoritesProvider.select((s) => s.contains(auction.id)));
 
     final title = auction.title;
@@ -315,7 +312,17 @@ class _LotexAuctionCardV2State extends ConsumerState<LotexAuctionCardV2> {
                                 ),
                                 SizedBox(
                                   width: 120,
-                                  child: _TimerPill(lang: lang, timeLeft: timeLeft, progress: progress),
+                                  child: AuctionTimer(
+                                    endTime: auction.endDate,
+                                    builder: (context, timeLeft) {
+                                      final progress = _progressFromTimeLeft(timeLeft);
+                                      return _TimerPill(
+                                        lang: lang,
+                                        timeLeft: timeLeft,
+                                        progress: progress,
+                                      );
+                                    },
+                                  ),
                                 ),
                               ],
                             ),

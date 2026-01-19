@@ -1,8 +1,28 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
+const { onDocumentCreated, onDocumentUpdated } = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
 
 admin.initializeApp();
+
+function userNotificationsCol(db, uid) {
+  return db.collection('users').doc(uid).collection('notifications');
+}
+
+async function createNotification(db, uid, payload) {
+  if (!uid) return;
+  const ref = userNotificationsCol(db, uid).doc();
+  await ref.set({
+    type: String(payload.type || 'generic'),
+    title: String(payload.title || 'Сповіщення'),
+    body: String(payload.body || ''),
+    auctionId: payload.auctionId || null,
+    category: payload.category || null,
+    actorUid: payload.actorUid || null,
+    read: false,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+}
 
 function requireAuth(request) {
   if (!request.auth || !request.auth.uid) {
@@ -295,4 +315,140 @@ exports.autoDrawWinners = onSchedule('every 1 minutes', async () => {
   }
 
   return null;
+});
+
+// -----------------------------
+// Auction in-app notifications
+// -----------------------------
+
+exports.onAuctionCreatedNotifyCategory = onDocumentCreated('auctions/{auctionId}', async (event) => {
+  const db = admin.firestore();
+  const data = event.data && event.data.data ? event.data.data() : null;
+  if (!data) return;
+
+  const auctionId = event.params.auctionId;
+  const title = String(data.title || 'Лот');
+  const category = String(data.category || '').trim();
+  const sellerId = String(data.sellerId || '').trim();
+
+  if (!category) return;
+
+  // Notify users who subscribed to this category.
+  // Users opt-in via `users/{uid}.subscribedCategories`.
+  const snap = await db
+    .collection('users')
+    .where('subscribedCategories', 'array-contains', category)
+    .limit(200)
+    .get();
+
+  if (snap.empty) return;
+
+  const batch = db.batch();
+  for (const doc of snap.docs) {
+    const uid = doc.id;
+    if (!uid || uid === sellerId) continue;
+
+    const ref = userNotificationsCol(db, uid).doc();
+    batch.set(ref, {
+      type: 'new_auction',
+      title: 'Новий лот у категорії',
+      body: `${category}: ${title}`,
+      auctionId,
+      category,
+      actorUid: sellerId || null,
+      read: false,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  await batch.commit();
+  return;
+});
+
+exports.onAuctionBidCreatedNotifyOutbid = onDocumentCreated('auctions/{auctionId}/bids/{bidId}', async (event) => {
+  const db = admin.firestore();
+  const bid = event.data && event.data.data ? event.data.data() : null;
+  if (!bid) return;
+
+  const auctionId = event.params.auctionId;
+  const bidderId = String(bid.userId || '').trim();
+  const amount = Number(bid.amount || 0);
+  if (!auctionId || !bidderId) return;
+
+  const auctionRef = db.collection('auctions').doc(auctionId);
+  const auctionSnap = await auctionRef.get();
+  const auction = auctionSnap.data() || {};
+  const title = String(auction.title || 'Лот');
+  const sellerId = String(auction.sellerId || '').trim();
+
+  // Find previous top bidder by taking 2nd item in amount-desc list.
+  const bidsSnap = await auctionRef.collection('bids')
+    .orderBy('amount', 'desc')
+    .limit(2)
+    .get();
+
+  if (bidsSnap.docs.length >= 2) {
+    const prev = bidsSnap.docs[1].data() || {};
+    const prevUid = String(prev.userId || '').trim();
+    if (prevUid && prevUid !== bidderId) {
+      await createNotification(db, prevUid, {
+        type: 'outbid',
+        title: 'Вашу ставку перебили',
+        body: `Лот: ${title}. Нова ставка: ${amount}`,
+        auctionId,
+        actorUid: bidderId,
+      });
+    }
+  }
+
+  // Optional: notify seller about a new bid.
+  if (sellerId && sellerId !== bidderId) {
+    await createNotification(db, sellerId, {
+      type: 'new_bid',
+      title: 'Нова ставка на ваш лот',
+      body: `Лот: ${title}. Ставка: ${amount}`,
+      auctionId,
+      actorUid: bidderId,
+    });
+  }
+
+  return;
+});
+
+exports.onAuctionSoldNotifyParticipants = onDocumentUpdated('auctions/{auctionId}', async (event) => {
+  const db = admin.firestore();
+  const before = event.data && event.data.before ? event.data.before.data() : null;
+  const after = event.data && event.data.after ? event.data.after.data() : null;
+  if (!before || !after) return;
+
+  const auctionId = event.params.auctionId;
+  const beforeStatus = String(before.status || 'active');
+  const afterStatus = String(after.status || 'active');
+  if (beforeStatus === afterStatus) return;
+
+  if (afterStatus !== 'sold') return;
+
+  const title = String(after.title || 'Лот');
+  const sellerId = String(after.sellerId || '').trim();
+  const winnerId = String(after.winnerId || '').trim();
+  if (!sellerId || !winnerId) return;
+
+  await Promise.all([
+    createNotification(db, winnerId, {
+      type: 'auction_won',
+      title: 'Ви виграли лот',
+      body: `Лот: ${title}. Можна звʼязатись з продавцем.`,
+      auctionId,
+      actorUid: sellerId,
+    }),
+    createNotification(db, sellerId, {
+      type: 'auction_sold',
+      title: 'Ваш лот купили',
+      body: `Лот: ${title}. Можна звʼязатись з покупцем.`,
+      auctionId,
+      actorUid: winnerId,
+    }),
+  ]);
+
+  return;
 });

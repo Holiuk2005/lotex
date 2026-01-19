@@ -15,6 +15,7 @@ abstract class AuctionEntity with _$AuctionEntity {
     required String description,
     required String imageUrl,
     String? imageBase64,
+    @Default('') String category,
     required double startPrice,
     required double currentPrice,
     double? buyoutPrice,
@@ -34,6 +35,7 @@ abstract class AuctionEntity with _$AuctionEntity {
       'description': description,
       'imageUrl': imageUrl,
       'imageBase64': imageBase64,
+      'category': category,
       'startPrice': startPrice,
       'currentPrice': currentPrice,
       'buyoutPrice': buyoutPrice,
@@ -75,6 +77,7 @@ abstract class AuctionEntity with _$AuctionEntity {
       description: data['description'] ?? '',
       imageUrl: data['imageUrl'] ?? '',
       imageBase64: data['imageBase64'],
+      category: (data['category'] as String?)?.trim() ?? '',
       startPrice: numOrStringToDouble(data['startPrice'], fallback: 0.0),
       currentPrice: numOrStringToDouble(data['currentPrice'], fallback: 0.0),
       buyoutPrice: () {

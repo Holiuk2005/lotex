@@ -5,9 +5,10 @@ import 'package:intl/intl.dart';
 import 'package:lotex/core/i18n/language_provider.dart';
 import 'package:lotex/core/i18n/lotex_i18n.dart';
 import 'package:lotex/core/theme/lotex_ui_tokens.dart';
-import 'package:lotex/core/utils/now_ticker_provider.dart';
 import 'package:lotex/features/auction/domain/entities/auction_entity.dart';
 import 'package:lotex/features/favorites/presentation/providers/favorites_provider.dart';
+
+import 'auction_timer.dart';
 
 class AuctionCard extends ConsumerWidget {
   final AuctionEntity auction;
@@ -23,24 +24,9 @@ class AuctionCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final lang = ref.watch(lotexLanguageProvider);
     final priceFormat = NumberFormat.currency(locale: 'uk_UA', symbol: '₴', decimalDigits: 0);
-    final now = ref.watch(nowTickerProvider).value ?? DateTime.now();
-    final timeLeft = auction.endDate.difference(now);
-    final isUrgent = timeLeft.inMinutes < 5 && !timeLeft.isNegative;
-    final isLive = !timeLeft.isNegative;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final isFavorite = ref.watch(favoritesProvider.select((s) => s.contains(auction.id)));
-
-    String timerText;
-    if (timeLeft.isNegative) {
-      timerText = "Завершено";
-    } else {
-      if (timeLeft.inHours > 24) {
-        timerText = "${timeLeft.inDays} дн.";
-      } else {
-        timerText = "${timeLeft.inHours}:${(timeLeft.inMinutes % 60).toString().padLeft(2, '0')}";
-      }
-    }
 
     final surface = isDark ? Colors.white.withAlpha((0.05 * 255).round()) : Theme.of(context).colorScheme.surface;
     final border = isDark
@@ -108,31 +94,37 @@ class AuctionCard extends ConsumerWidget {
                   Positioned(
                     top: 12,
                     right: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withAlpha((0.40 * 255).round()),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: Colors.white.withAlpha((0.10 * 255).round())),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: isLive ? const Color(0xFFEF4444) : LotexUiColors.slate500,
-                              shape: BoxShape.circle,
-                            ),
+                    child: AuctionTimer(
+                      endTime: auction.endDate,
+                      builder: (context, timeLeft) {
+                        final isLive = !timeLeft.isNegative && timeLeft != Duration.zero;
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withAlpha((0.40 * 255).round()),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: Colors.white.withAlpha((0.10 * 255).round())),
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            isLive ? 'Live' : 'Ended',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: isLive ? const Color(0xFFEF4444) : LotexUiColors.slate500,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                isLive ? 'Live' : 'Ended',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -197,11 +189,41 @@ class AuctionCard extends ConsumerWidget {
                       ),
                       Row(
                         children: [
-                          Icon(Icons.access_time_rounded, size: 16, color: isUrgent ? LotexUiColors.error : muted),
-                          const SizedBox(width: 6),
-                          Text(
-                            timerText,
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: isUrgent ? LotexUiColors.error : titleColor),
+                          AuctionTimer(
+                            endTime: auction.endDate,
+                            builder: (context, timeLeft) {
+                              final isUrgent = timeLeft.inMinutes < 5 && timeLeft != Duration.zero;
+                              final isEnded = timeLeft == Duration.zero;
+
+                              final String timerText;
+                              if (isEnded) {
+                                timerText = 'Завершено';
+                              } else if (timeLeft.inHours > 24) {
+                                timerText = "${timeLeft.inDays} дн.";
+                              } else {
+                                timerText =
+                                    "${timeLeft.inHours}:${(timeLeft.inMinutes % 60).toString().padLeft(2, '0')}";
+                              }
+
+                              return Row(
+                                children: [
+                                  Icon(
+                                    Icons.access_time_rounded,
+                                    size: 16,
+                                    color: isUrgent ? LotexUiColors.error : muted,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    timerText,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: isUrgent ? LotexUiColors.error : titleColor,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         ],
                       ),

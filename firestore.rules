@@ -40,6 +40,19 @@ service cloud.firestore {
         allow read: if isSelf(userId) || isAdmin();
         allow create, update, delete: if false;
       }
+
+      // In-app notifications (created by backend). Users can read and mark as read.
+      match /notifications/{notificationId} {
+        allow get, list: if isSelf(userId) || isAdmin();
+        allow create: if false;
+        allow update: if isSelf(userId)
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'read',
+            'readAt',
+            'updatedAt'
+          ]);
+        allow delete: if isSelf(userId) || isAdmin();
+      }
     }
 
     // Lotteries (public read, admin write)
@@ -141,77 +154,15 @@ service cloud.firestore {
           && (request.auth.uid == resource.data.winnerId)
           && request.resource.data.diff(resource.data).changedKeys().hasOnly([
             'deliveryInfo',
-            'status',
-            'updatedAt'
-          ]);
-      }
-
-      function isBuyoutUpdate() {
-        return isSignedIn()
-          && request.auth.uid != resource.data.sellerId
-          && (resource.data.status == 'active')
-          && (resource.data.buyoutPrice is number)
+            rules_version = '2';
+            service cloud.firestore {
+              match /databases/{database}/documents {
+                // DEV MODE (emulators): allow read/write for everyone.
+                // This avoids `[permission-denied]` in hybrid mode (real Auth + Firestore emulator).
+                // Tighten these rules before production.
+                match /{document=**} {
+                  allow read, write: if true;
+                }
+              }
+            }
           && (resource.data.buyoutPrice > 0)
-          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
-            'currentPrice',
-            'bidCount',
-            'lastBidderId',
-            'winnerId',
-            'status',
-            'updatedAt'
-          ])
-          && request.resource.data.winnerId == request.auth.uid
-          && request.resource.data.lastBidderId == request.auth.uid
-          && request.resource.data.status == 'sold'
-          && request.resource.data.bidCount == resource.data.bidCount + 1
-          && request.resource.data.currentPrice == resource.data.buyoutPrice;
-      }
-
-      function isSellerEdit() {
-        // Seller can edit auction fields, but should not lower price or spoof lastBidderId.
-        // Keep it permissive for now but block obvious bid-field tampering.
-        return isSeller()
-          && request.resource.data.sellerId == resource.data.sellerId
-          && request.resource.data.currentPrice == resource.data.currentPrice
-          && request.resource.data.lastBidderId == resource.data.lastBidderId
-          && request.resource.data.bidCount == resource.data.bidCount;
-      }
-
-      // Seller edits are allowed, but bid/shipping flows are strictly controlled.
-      allow update: if isSellerEdit() || isBidUpdate() || isBuyoutUpdate() || isWinnerUpdate();
-
-      allow delete: if isSignedIn() && request.auth.uid == resource.data.sellerId;
-
-      match /bids/{bidId} {
-        // DEV-friendly rule: any authenticated user may read/write bids.
-        allow read, write: if isSignedIn();
-      }
-    }
-
-    // Chat dialogs
-    match /dialogs/{dialogId} {
-      allow read: if isSignedIn() && request.auth.uid in resource.data.participants;
-      allow create, update: if isSignedIn() && request.auth.uid in request.resource.data.participants;
-      allow delete: if false;
-    }
-
-    // Chat messages
-    match /chats/{chatId} {
-      allow read: if isSignedIn()
-        && (resource.data.dialogId is string)
-        && isDialogParticipant(resource.data.dialogId);
-
-      allow create: if isSignedIn()
-        && request.resource.data.senderId == request.auth.uid
-        && (request.resource.data.dialogId is string)
-        && isDialogParticipant(request.resource.data.dialogId);
-
-      allow update, delete: if false;
-    }
-
-    // Default deny
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}

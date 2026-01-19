@@ -18,6 +18,7 @@ class CreateAuctionController extends AsyncNotifier<void> {
   Future<void> create({
     required String title,
     required String description,
+    required String category,
     required double startPrice,
     double? buyoutPrice,
     required DateTime endDate,
@@ -33,6 +34,7 @@ class CreateAuctionController extends AsyncNotifier<void> {
       await _repository.createAuction(
         title: title,
         description: description,
+        category: category,
         startPrice: startPrice,
         buyoutPrice: buyoutPrice,
         endDate: endDate,

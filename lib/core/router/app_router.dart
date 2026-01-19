@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../features/auction/domain/entities/auction_entity.dart';
 import '../../features/auction/presentation/pages/auction_details_screen.dart';
 import '../../features/auction/presentation/pages/create_auction_screen.dart';
@@ -10,6 +11,7 @@ import '../../features/profile/presentation/pages/settings_screen.dart';
 import '../../features/profile/presentation/pages/public_profile_screen.dart';
 import '../../features/auction/presentation/pages/shipping_screen.dart';
 import '../../features/auction/presentation/pages/payment_screen.dart';
+import '../../features/auction/presentation/pages/order_checkout_screen.dart';
 import '../../features/auth/presentation/pages/login_screen.dart';
 import '../../features/auth/presentation/providers/auth_state_provider.dart';
 import '../../features/auth/domain/entities/user_entity.dart';
@@ -34,7 +36,9 @@ final routerProvider = Provider<GoRouter>((ref) {
   // Avoid using deprecated `.stream` on StreamProvider.
   final authRefresh = ValueNotifier<int>(0);
   ref.onDispose(authRefresh.dispose);
-  ref.listen<AsyncValue<UserEntity?>>(authStateChangesProvider, (_, __) {
+  // Important: listen to the *derived* user provider to avoid a timing race
+  // where redirect runs before `valueOrNull` updates.
+  ref.listen<UserEntity?>(currentUserProvider, (_, __) {
     authRefresh.value++;
   });
 
@@ -43,9 +47,11 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/home',
     refreshListenable: authRefresh,
     redirect: (context, state) {
-      final isAuthRoute = state.matchedLocation == '/login' || state.matchedLocation == '/register';
+      final isAuthRoute =
+          state.matchedLocation == '/login' || state.matchedLocation == '/register';
       final isLoggedIn = ref.read(currentUserProvider) != null;
 
+      if (!isLoggedIn && !isAuthRoute) return '/login';
       if (isLoggedIn && isAuthRoute) return '/home';
       return null;
     },
@@ -119,6 +125,39 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       GoRoute(
+        path: '/auction/:auctionId',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) {
+          final id = state.pathParameters['auctionId'] ?? '';
+          if (id.isEmpty) {
+            return const Scaffold(body: Center(child: Text('Auction not found')));
+          }
+
+          return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+            future: FirebaseFirestore.instance.collection('auctions').doc(id).get(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+              if (snapshot.hasError) {
+                return Scaffold(
+                  body: Center(child: Text('Error: ${snapshot.error}')),
+                );
+              }
+              final doc = snapshot.data;
+              if (doc == null || !doc.exists) {
+                return const Scaffold(body: Center(child: Text('Auction not found')));
+              }
+              final auction = AuctionEntity.fromDocument(doc);
+              return AuctionDetailsScreen(auction: auction);
+            },
+          );
+        },
+      ),
+
+      GoRoute(
         path: '/auction/edit',
         parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) {
@@ -142,6 +181,28 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final id = state.pathParameters['auctionId'] ?? '';
           return PaymentScreen(auctionId: id);
+        },
+      ),
+
+      GoRoute(
+        path: '/checkout',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) {
+          // Demo-friendly defaults.
+          final extra = state.extra;
+          double itemPrice = 1200;
+          double shippingCost = 0;
+          if (extra is Map) {
+            final p = extra['itemPrice'];
+            final s = extra['shippingCost'];
+            if (p is num) itemPrice = p.toDouble();
+            if (s is num) shippingCost = s.toDouble();
+          }
+
+          return OrderCheckoutScreen(
+            itemPrice: itemPrice,
+            shippingCost: shippingCost,
+          );
         },
       ),
 

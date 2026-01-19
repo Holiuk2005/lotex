@@ -7,6 +7,7 @@ import '../../../../core/i18n/lotex_i18n.dart';
 import '../../../../core/theme/lotex_ui_tokens.dart';
 import '../../../../core/widgets/lotex_modal.dart';
 import '../providers/create_auction_controller.dart';
+import 'package:lotex/services/category_seed_service.dart';
 
 Future<void> showCreateLotModal({
   required BuildContext context,
@@ -19,6 +20,7 @@ Future<void> showCreateLotModal({
   final startCtrl = TextEditingController();
   DateTime endDate = DateTime.now().add(const Duration(days: 1));
   XFile? image;
+  String? selectedCategoryId;
 
   await showLotexModal<void>(
     context: context,
@@ -64,6 +66,9 @@ Future<void> showCreateLotModal({
 
         return StatefulBuilder(
           builder: (context, setState) {
+            final categories = CategorySeedService.categories;
+            selectedCategoryId ??= categories.isNotEmpty ? categories.first.id : null;
+
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -77,6 +82,46 @@ Future<void> showCreateLotModal({
 
                 _label(LotexI18n.tr(lang, 'startingBid')),
                 _field(startCtrl, keyboardType: TextInputType.number, hint: LotexI18n.tr(lang, 'currency')),
+                const SizedBox(height: 12),
+
+                _label(LotexI18n.tr(lang, 'category')),
+                SizedBox(
+                  height: 48,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha((0.06 * 255).round()),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withAlpha((0.08 * 255).round())),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: selectedCategoryId,
+                        isExpanded: true,
+                        dropdownColor: const Color(0xFF111827),
+                        iconEnabledColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        items: [
+                          for (final c in categories)
+                            DropdownMenuItem<String>(
+                              value: c.id,
+                              child: Text(
+                                c.parentId == null ? c.name : '— ${c.name}',
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                        ],
+                        onChanged: state.isLoading
+                            ? null
+                            : (v) {
+                                setState(() {
+                                  selectedCategoryId = v;
+                                });
+                              },
+                      ),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 12),
 
                 _label(LotexI18n.tr(lang, 'endDate')),
@@ -148,15 +193,23 @@ Future<void> showCreateLotModal({
                               final title = titleCtrl.text.trim();
                               final desc = descCtrl.text.trim();
                               final start = double.tryParse(startCtrl.text.trim().replaceAll(' ', ''));
+                              final category = (selectedCategoryId ?? '').trim();
                               if (title.isEmpty || start == null || image == null) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('Заповніть поля і додайте фото')),
                                 );
                                 return;
                               }
+                              if (category.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(LotexI18n.tr(lang, 'selectCategoryRequired'))),
+                                );
+                                return;
+                              }
                               await ref.read(createAuctionControllerProvider.notifier).create(
                                     title: title,
                                     description: desc,
+                                    category: category,
                                     startPrice: start,
                                     endDate: endDate,
                                     image: image!,

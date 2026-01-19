@@ -19,6 +19,7 @@ mixin _$AuctionEntity {
   String get description;
   String get imageUrl;
   String? get imageBase64;
+  String get category;
   double get startPrice;
   double get currentPrice;
   double? get buyoutPrice;
@@ -51,6 +52,8 @@ mixin _$AuctionEntity {
                 other.imageUrl == imageUrl) &&
             (identical(other.imageBase64, imageBase64) ||
                 other.imageBase64 == imageBase64) &&
+            (identical(other.category, category) ||
+                other.category == category) &&
             (identical(other.startPrice, startPrice) ||
                 other.startPrice == startPrice) &&
             (identical(other.currentPrice, currentPrice) ||
@@ -79,6 +82,7 @@ mixin _$AuctionEntity {
       description,
       imageUrl,
       imageBase64,
+      category,
       startPrice,
       currentPrice,
       buyoutPrice,
@@ -92,7 +96,7 @@ mixin _$AuctionEntity {
 
   @override
   String toString() {
-    return 'AuctionEntity(id: $id, title: $title, description: $description, imageUrl: $imageUrl, imageBase64: $imageBase64, startPrice: $startPrice, currentPrice: $currentPrice, buyoutPrice: $buyoutPrice, endDate: $endDate, sellerId: $sellerId, bidCount: $bidCount, lastBidderId: $lastBidderId, winnerId: $winnerId, status: $status, deliveryInfo: $deliveryInfo)';
+    return 'AuctionEntity(id: $id, title: $title, description: $description, imageUrl: $imageUrl, imageBase64: $imageBase64, category: $category, startPrice: $startPrice, currentPrice: $currentPrice, buyoutPrice: $buyoutPrice, endDate: $endDate, sellerId: $sellerId, bidCount: $bidCount, lastBidderId: $lastBidderId, winnerId: $winnerId, status: $status, deliveryInfo: $deliveryInfo)';
   }
 }
 
@@ -108,6 +112,7 @@ abstract mixin class $AuctionEntityCopyWith<$Res> {
       String description,
       String imageUrl,
       String? imageBase64,
+      String category,
       double startPrice,
       double currentPrice,
       double? buyoutPrice,
@@ -138,6 +143,7 @@ class _$AuctionEntityCopyWithImpl<$Res>
     Object? description = null,
     Object? imageUrl = null,
     Object? imageBase64 = freezed,
+    Object? category = null,
     Object? startPrice = null,
     Object? currentPrice = null,
     Object? buyoutPrice = freezed,
@@ -170,6 +176,10 @@ class _$AuctionEntityCopyWithImpl<$Res>
           ? _self.imageBase64
           : imageBase64 // ignore: cast_nullable_to_non_nullable
               as String?,
+      category: null == category
+          ? _self.category
+          : category // ignore: cast_nullable_to_non_nullable
+              as String,
       startPrice: null == startPrice
           ? _self.startPrice
           : startPrice // ignore: cast_nullable_to_non_nullable
@@ -313,6 +323,7 @@ extension AuctionEntityPatterns on AuctionEntity {
             String description,
             String imageUrl,
             String? imageBase64,
+            String category,
             double startPrice,
             double currentPrice,
             double? buyoutPrice,
@@ -335,6 +346,7 @@ extension AuctionEntityPatterns on AuctionEntity {
             _that.description,
             _that.imageUrl,
             _that.imageBase64,
+            _that.category,
             _that.startPrice,
             _that.currentPrice,
             _that.buyoutPrice,
@@ -371,6 +383,7 @@ extension AuctionEntityPatterns on AuctionEntity {
             String description,
             String imageUrl,
             String? imageBase64,
+            String category,
             double startPrice,
             double currentPrice,
             double? buyoutPrice,
@@ -392,6 +405,7 @@ extension AuctionEntityPatterns on AuctionEntity {
             _that.description,
             _that.imageUrl,
             _that.imageBase64,
+            _that.category,
             _that.startPrice,
             _that.currentPrice,
             _that.buyoutPrice,
@@ -427,6 +441,7 @@ extension AuctionEntityPatterns on AuctionEntity {
             String description,
             String imageUrl,
             String? imageBase64,
+            String category,
             double startPrice,
             double currentPrice,
             double? buyoutPrice,
@@ -448,6 +463,7 @@ extension AuctionEntityPatterns on AuctionEntity {
             _that.description,
             _that.imageUrl,
             _that.imageBase64,
+            _that.category,
             _that.startPrice,
             _that.currentPrice,
             _that.buyoutPrice,
@@ -473,6 +489,7 @@ class _AuctionEntity extends AuctionEntity {
       required this.description,
       required this.imageUrl,
       this.imageBase64,
+      this.category = '',
       required this.startPrice,
       required this.currentPrice,
       this.buyoutPrice,
@@ -495,6 +512,9 @@ class _AuctionEntity extends AuctionEntity {
   final String imageUrl;
   @override
   final String? imageBase64;
+  @override
+  @JsonKey()
+  final String category;
   @override
   final double startPrice;
   @override
@@ -539,6 +559,8 @@ class _AuctionEntity extends AuctionEntity {
                 other.imageUrl == imageUrl) &&
             (identical(other.imageBase64, imageBase64) ||
                 other.imageBase64 == imageBase64) &&
+            (identical(other.category, category) ||
+                other.category == category) &&
             (identical(other.startPrice, startPrice) ||
                 other.startPrice == startPrice) &&
             (identical(other.currentPrice, currentPrice) ||
@@ -567,6 +589,7 @@ class _AuctionEntity extends AuctionEntity {
       description,
       imageUrl,
       imageBase64,
+      category,
       startPrice,
       currentPrice,
       buyoutPrice,
@@ -580,7 +603,7 @@ class _AuctionEntity extends AuctionEntity {
 
   @override
   String toString() {
-    return 'AuctionEntity(id: $id, title: $title, description: $description, imageUrl: $imageUrl, imageBase64: $imageBase64, startPrice: $startPrice, currentPrice: $currentPrice, buyoutPrice: $buyoutPrice, endDate: $endDate, sellerId: $sellerId, bidCount: $bidCount, lastBidderId: $lastBidderId, winnerId: $winnerId, status: $status, deliveryInfo: $deliveryInfo)';
+    return 'AuctionEntity(id: $id, title: $title, description: $description, imageUrl: $imageUrl, imageBase64: $imageBase64, category: $category, startPrice: $startPrice, currentPrice: $currentPrice, buyoutPrice: $buyoutPrice, endDate: $endDate, sellerId: $sellerId, bidCount: $bidCount, lastBidderId: $lastBidderId, winnerId: $winnerId, status: $status, deliveryInfo: $deliveryInfo)';
   }
 }
 
@@ -598,6 +621,7 @@ abstract mixin class _$AuctionEntityCopyWith<$Res>
       String description,
       String imageUrl,
       String? imageBase64,
+      String category,
       double startPrice,
       double currentPrice,
       double? buyoutPrice,
@@ -628,6 +652,7 @@ class __$AuctionEntityCopyWithImpl<$Res>
     Object? description = null,
     Object? imageUrl = null,
     Object? imageBase64 = freezed,
+    Object? category = null,
     Object? startPrice = null,
     Object? currentPrice = null,
     Object? buyoutPrice = freezed,
@@ -660,6 +685,10 @@ class __$AuctionEntityCopyWithImpl<$Res>
           ? _self.imageBase64
           : imageBase64 // ignore: cast_nullable_to_non_nullable
               as String?,
+      category: null == category
+          ? _self.category
+          : category // ignore: cast_nullable_to_non_nullable
+              as String,
       startPrice: null == startPrice
           ? _self.startPrice
           : startPrice // ignore: cast_nullable_to_non_nullable

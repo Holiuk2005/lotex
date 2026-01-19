@@ -20,6 +20,7 @@ import 'package:lotex/features/favorites/presentation/providers/favorites_provid
 import 'package:lotex/features/chat/presentation/providers/chat_providers.dart';
 import 'package:lotex/features/chat/presentation/pages/chat_conversation_screen.dart';
 import '../../domain/entities/auction_entity.dart';
+import '../widgets/auction_timer.dart';
 import '../providers/place_bid_controller.dart';
 
 class AuctionDetailsScreen extends ConsumerStatefulWidget {
@@ -33,8 +34,6 @@ class AuctionDetailsScreen extends ConsumerStatefulWidget {
 
 class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
   late final NumberFormat _priceFormat;
-  Timer? _timer;
-  String _timeLeft = '';
   bool _isBidSheetOpen = false;
   bool _didAutoOpenShipping = false;
   int _thumbIndex = 0;
@@ -46,8 +45,6 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
   void initState() {
     super.initState();
     _priceFormat = NumberFormat.currency(locale: 'uk_UA', symbol: '₴', decimalDigits: 0);
-    _updateTimeLeft();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _updateTimeLeft());
 
     _placeBidSub = ref.listenManual<AsyncValue<void>>(
       placeBidControllerProvider,
@@ -95,24 +92,7 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
   @override
   void dispose() {
     _placeBidSub?.close();
-    _timer?.cancel();
     super.dispose();
-  }
-
-  void _updateTimeLeft() {
-    final diff = auction.endDate.difference(DateTime.now());
-    final safe = diff.isNegative ? Duration.zero : diff;
-    final hours = safe.inHours;
-    final minutes = safe.inMinutes.remainder(60);
-    final seconds = safe.inSeconds.remainder(60);
-    final lang = ref.read(lotexLanguageProvider);
-    final hs = LotexI18n.tr(lang, 'hoursShort');
-    final ms = LotexI18n.tr(lang, 'minutesShort');
-    final ss = LotexI18n.tr(lang, 'secondsShort');
-    final next = '$hours$hs $minutes$ms $seconds$ss';
-    if (mounted && next != _timeLeft) {
-      setState(() => _timeLeft = next);
-    }
   }
 
   String _timeAgoText(LotexLanguage lang, DateTime? createdAt) {
@@ -180,6 +160,52 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
         SnackBar(
           content: Text(
             LotexI18n.tr(lang, 'errorWithDetails').replaceFirst('{details}', _humanError(e)),
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _openChatWithBuyer(String buyerId) async {
+    final user = ref.read(currentUserProvider);
+    final lang = ref.read(lotexLanguageProvider);
+
+    if (user == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(LotexI18n.tr(lang, 'authRequired'))),
+      );
+      return;
+    }
+
+    if (buyerId.isEmpty || auction.sellerId.isEmpty) return;
+    if (user.uid != auction.sellerId) return;
+    if (buyerId == user.uid) return;
+
+    try {
+      final dialogId = await ref.read(chatRepositoryProvider).ensureAuctionDialog(
+            auctionId: auction.id,
+            buyerId: buyerId,
+            sellerId: user.uid,
+            title: auction.title,
+          );
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatConversationScreen(
+            dialogId: dialogId,
+            role: 'seller',
+            title: auction.title,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            LotexI18n.tr(lang, 'errorWithDetails').replaceFirst('{details}', humanError(e)),
           ),
         ),
       );
@@ -626,7 +652,14 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
         !isClosed &&
         (user == null || user.uid != auction.sellerId);
 
-    final canMessageSeller = auction.sellerId.isNotEmpty && (user == null || user.uid != auction.sellerId);
+    final canMessageSeller =
+      auction.sellerId.isNotEmpty && (user == null || user.uid != auction.sellerId);
+
+    final winnerId = (auction.winnerId ?? '').trim();
+    final canMessageBuyer = user != null &&
+      user.uid == auction.sellerId &&
+      winnerId.isNotEmpty &&
+      winnerId != user.uid;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -748,7 +781,25 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
         const SizedBox(height: 18),
         _BidCard(
           currentPriceText: _priceFormat.format(auction.currentPrice),
-          endsIn: _timeLeft,
+          endsInWidget: AuctionTimer(
+            endTime: auction.endDate,
+            builder: (context, timeLeft) {
+              final h = timeLeft.inHours;
+              final m = timeLeft.inMinutes.remainder(60);
+              final s = timeLeft.inSeconds.remainder(60);
+              final hs = LotexI18n.tr(lang, 'hoursShort');
+              final ms = LotexI18n.tr(lang, 'minutesShort');
+              final ss = LotexI18n.tr(lang, 'secondsShort');
+              final text = '$h$hs $m$ms $s$ss';
+              return Text(
+                text,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+              );
+            },
+          ),
           onPlaceBid: _showBidSheet,
           buyoutLabel: showBuyout ? '${LotexI18n.tr(lang, 'buyoutAction')} • ${_priceFormat.format(buyout)}' : null,
           onBuyout: showBuyout ? _confirmBuyout : null,
@@ -759,6 +810,13 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
           _SecondaryCta(
             label: LotexI18n.tr(lang, 'messageSeller'),
             onTap: _openChatWithSeller,
+          ),
+        ],
+        if (canMessageBuyer) ...[
+          const SizedBox(height: 12),
+          _SecondaryCta(
+            label: 'Написати покупцю',
+            onTap: () => _openChatWithBuyer(winnerId),
           ),
         ],
         const SizedBox(height: 18),
@@ -990,7 +1048,7 @@ class _Badge extends StatelessWidget {
 
 class _BidCard extends StatelessWidget {
   final String currentPriceText;
-  final String endsIn;
+  final Widget endsInWidget;
   final VoidCallback onPlaceBid;
   final String? buyoutLabel;
   final VoidCallback? onBuyout;
@@ -998,7 +1056,7 @@ class _BidCard extends StatelessWidget {
 
   const _BidCard({
     required this.currentPriceText,
-    required this.endsIn,
+    required this.endsInWidget,
     required this.onPlaceBid,
     this.buyoutLabel,
     this.onBuyout,
@@ -1051,13 +1109,7 @@ class _BidCard extends StatelessWidget {
                     children: [
                       const Icon(Icons.schedule, size: 18, color: LotexUiColors.violet400),
                       const SizedBox(width: 8),
-                      Text(
-                        endsIn,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Colors.white,
-                              fontFeatures: const [FontFeature.tabularFigures()],
-                            ),
-                      ),
+                      endsInWidget,
                     ],
                   ),
                 ],

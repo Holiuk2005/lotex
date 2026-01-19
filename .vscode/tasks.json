@@ -2,16 +2,36 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Firebase: Emulators (auth, firestore, storage)",
+      "label": "Firebase: Emulators Stop (kill ports)",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "$ports = @(4000, 4400, 4500, 5001, 8080, 9150, 9099, 9199); $conns = Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object { $ports -contains $_.LocalPort }; if (-not $conns) { Write-Host 'No emulator ports are listening.'; exit 0 }; $pids = $conns | Select-Object -ExpandProperty OwningProcess -Unique; Write-Host ('Stopping processes: ' + ($pids -join ', ')); foreach ($pid in $pids) { try { Stop-Process -Id $pid -Force -ErrorAction Stop } catch { Write-Host ('Failed to stop PID ' + $pid + ': ' + $_.Exception.Message) } }"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Firebase: Emulators (auth, firestore, storage, functions)",
       "type": "shell",
       "command": "firebase",
       "args": [
         "emulators:start",
         "--only",
-        "auth,firestore,storage"
+        "'auth,firestore,storage,functions'"
       ],
       "options": {
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "JAVA_HOME": "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.9.10-hotspot",
+          "PATH": "C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.9.10-hotspot\\bin;${env:PATH}"
+        }
       },
       "isBackground": true,
       "problemMatcher": []
@@ -31,6 +51,20 @@
       "problemMatcher": []
     },
     {
+      "label": "Firebase: Deploy (functions)",
+      "type": "shell",
+      "command": "firebase",
+      "args": [
+        "deploy",
+        "--only",
+        "functions"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Flutter: Run Chrome (use emulators)",
       "type": "shell",
       "command": "flutter",
@@ -41,7 +75,8 @@
         "--web-browser-flag=--no-first-run",
         "--web-browser-flag=--no-default-browser-check",
         "--web-browser-flag=--disable-extensions",
-        "--dart-define=USE_FIREBASE_EMULATORS=true"
+        "--dart-define=USE_FIREBASE_EMULATORS=true",
+        "--dart-define=USE_AUTH_EMULATOR=false"
       ],
       "options": {
         "cwd": "${workspaceFolder}",

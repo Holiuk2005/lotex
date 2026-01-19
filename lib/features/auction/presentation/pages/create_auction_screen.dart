@@ -16,6 +16,7 @@ import 'package:lotex/core/i18n/language_provider.dart';
 import 'package:lotex/core/i18n/lotex_i18n.dart';
 import 'package:lotex/core/utils/human_error.dart';
 import '../providers/create_submit_provider.dart';
+import 'package:lotex/services/category_seed_service.dart';
 
 class CreateAuctionScreen extends ConsumerStatefulWidget {
   const CreateAuctionScreen({super.key});
@@ -32,6 +33,8 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
   final _startPriceController = TextEditingController();
   final _buyoutPriceController = TextEditingController();
   final _dateController = TextEditingController();
+
+  String? _selectedCategoryId;
 
   DateTime? _selectedDate;
   XFile? _pickedImage;
@@ -163,6 +166,15 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
         return;
       }
 
+      final category = (_selectedCategoryId ?? '').trim();
+      if (category.isEmpty) {
+        final lang = ref.read(lotexLanguageProvider);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(LotexI18n.tr(lang, 'selectCategoryRequired'))),
+        );
+        return;
+      }
+
       final startPrice =
           double.parse(_startPriceController.text.replaceAll(',', '.'));
 
@@ -177,6 +189,7 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
       ref.read(createAuctionControllerProvider.notifier).create(
             title: _titleController.text,
             description: _descController.text,
+        category: category,
             startPrice: startPrice,
             buyoutPrice: buyoutPrice,
             endDate: _selectedDate!,
@@ -195,6 +208,7 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
       if (isLoading) return false;
       if (_pickedImage == null) return false;
       if (_selectedDate == null) return false;
+      if ((_selectedCategoryId ?? '').trim().isEmpty) return false;
 
       if (_titleController.text.trim().isEmpty) return false;
       if (_descController.text.trim().isEmpty) return false;
@@ -211,6 +225,20 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
 
       return true;
     }
+
+    final categories = CategorySeedService.categories;
+    final categoryItems = <DropdownMenuItem<String>>[
+      for (final c in categories)
+        DropdownMenuItem<String>(
+          value: c.id,
+          child: Text(
+            c.parentId == null ? c.name : '— ${c.name}',
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+    ];
+
+    _selectedCategoryId ??= categories.isNotEmpty ? categories.first.id : null;
 
     // Reserve space at the bottom so content never hides behind the pinned action bar.
     const double actionBarHeight = 72;
@@ -340,6 +368,61 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
                     validator: (v) => (v == null || v.isEmpty)
                         ? LotexI18n.tr(lang, 'enterDescription')
                         : null,
+                  ),
+                  const SizedBox(height: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        LotexI18n.tr(lang, 'category'),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ) ??
+                            const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Theme.of(context).dividerColor),
+                        ),
+                        child: FormField<String>(
+                          initialValue: _selectedCategoryId,
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) {
+                              return LotexI18n.tr(lang, 'selectCategoryRequired');
+                            }
+                            return null;
+                          },
+                          builder: (field) {
+                            return InputDecorator(
+                              decoration: InputDecoration(
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                errorText: field.errorText,
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: (_selectedCategoryId ?? '').isNotEmpty ? _selectedCategoryId : field.value,
+                                  isExpanded: true,
+                                  items: categoryItems,
+                                  onChanged: isLoading
+                                      ? null
+                                      : (v) {
+                                          setState(() {
+                                            _selectedCategoryId = v;
+                                          });
+                                          field.didChange(v);
+                                        },
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   LotexInput(

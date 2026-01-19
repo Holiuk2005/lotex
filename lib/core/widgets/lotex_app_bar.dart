@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../theme/lotex_ui_tokens.dart';
 import 'theme_toggle.dart';
+import '../../features/notifications/presentation/notifications_bell_button.dart';
 
 class LotexAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showDesktopSearch;
@@ -157,32 +158,7 @@ class LotexAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         ...extraActions,
         if (showDefaultActions) ...[
-          IconButton(
-            onPressed: () {},
-            tooltip: 'Сповіщення',
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Icon(
-                  Icons.notifications_none,
-                  color: isDark ? LotexUiColors.slate400 : Theme.of(context).colorScheme.onSurface,
-                ),
-                Positioned(
-                  top: -1,
-                  right: -1,
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: isDark ? LotexUiColors.neonOrange : Theme.of(context).colorScheme.error,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: isDark ? LotexUiColors.slate950 : Theme.of(context).colorScheme.surface, width: 2),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          const NotificationsBellButton(),
           if (isDesktop)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),

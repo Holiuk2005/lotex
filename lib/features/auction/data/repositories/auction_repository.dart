@@ -88,6 +88,7 @@ class AuctionRepository {
   Future<void> createAuction({
     required String title,
     required String description,
+    required String category,
     required double startPrice,
     required DateTime endDate,
     required Object imageFile, // File, XFile or Uint8List
@@ -183,6 +184,7 @@ class AuctionRepository {
         description: description,
         imageUrl: imageUrl,
         imageBase64: base64Image,
+        category: category.trim(),
         startPrice: startPrice,
         currentPrice: startPrice,
         buyoutPrice: buyoutPrice,

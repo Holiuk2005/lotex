@@ -22,6 +22,11 @@ const bool _useFirebaseEmulators = bool.fromEnvironment(
   defaultValue: false,
 );
 
+const bool _useAuthEmulator = bool.fromEnvironment(
+  'USE_AUTH_EMULATOR',
+  defaultValue: false,
+);
+
 Future<void> main() async {
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
@@ -361,7 +366,12 @@ Future<void> _connectToFirebaseEmulators() async {
   developer.log('Connecting to Firebase emulators at $host', name: 'Lotex');
 
   // Auth
-  await FirebaseAuth.instance.useAuthEmulator(host, 9099);
+  if (_useAuthEmulator) {
+    await FirebaseAuth.instance.useAuthEmulator(host, 9099);
+    developer.log('Auth emulator enabled (9099)', name: 'Lotex');
+  } else {
+    developer.log('Auth emulator disabled (using real Firebase Auth)', name: 'Lotex');
+  }
 
   // Firestore
   FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
@@ -405,6 +415,9 @@ class MyApp extends ConsumerWidget {
           darkTheme: AppTheme.dark(),
           themeMode: mode,
           routerConfig: router,
+          builder: (context, child) {
+            return _AuthGate(child: child);
+          },
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
@@ -415,6 +428,28 @@ class MyApp extends ConsumerWidget {
             Locale('en'),
           ],
         );
+      },
+    );
+  }
+}
+
+class _AuthGate extends StatelessWidget {
+  final Widget? child;
+
+  const _AuthGate({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const LotexAppLoadingScreen();
+        }
+
+        // Navigation between /login <-> /home is handled by GoRouter.redirect.
+        // Here we only ensure we don't show an empty frame.
+        return child ?? const SizedBox.shrink();
       },
     );
   }
