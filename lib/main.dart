@@ -27,7 +27,9 @@ const bool _useFirebaseEmulators = bool.fromEnvironment(
 
 const bool _useAuthEmulator = bool.fromEnvironment(
   'USE_AUTH_EMULATOR',
-  defaultValue: false,
+  // When running against Firestore/Storage emulators, using the Auth emulator
+  // avoids "unauthorized"/"permission-denied" caused by missing auth context.
+  defaultValue: true,
 );
 
 Future<void> main() async {

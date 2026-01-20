@@ -1,0 +1,27 @@
+name: Integration (manual)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  integration_android:
+    name: Integration tests (Android emulator)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Pub get
+        run: flutter pub get
+
+      # Note: This is a scaffold. Running real integration tests usually requires
+      # Firebase Emulator Suite and an Android emulator (or Flutter driver on web).
+      # Implementing that end-to-end in CI depends on your Firebase/project setup.
+      - name: Run integration tests (scaffold)
+        run: |
+          echo "Integration workflow scaffold. Add emulator + Firebase emulators here."

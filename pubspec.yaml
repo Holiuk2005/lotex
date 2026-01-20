@@ -12,15 +12,13 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-  # --- State Management & Architecture (Riverpod + Hooks) ---
+  # --- State Management & Architecture (Riverpod) ---
   flutter_riverpod: ^2.4.9
-  hooks_riverpod: ^2.4.9
-  flutter_hooks: ^0.21.3+1
   
   # --- Data Class Generation (Freezed) ---
   freezed_annotation: ^3.1.0
   json_annotation: ^4.8.1
-  equatable: ^2.0.5
+  cupertino_icons: ^1.0.8
 
   # --- Firebase (Backend) ---
   firebase_core: ^4.3.0
@@ -36,7 +34,6 @@ dependencies:
   google_fonts: ^6.1.0
   flutter_svg: ^2.0.10+1
   uuid: ^4.3.3        # Генерація ID
-  cached_network_image: ^3.3.1 # Кеш фото
   shared_preferences: ^2.2.3
   image_picker: ^1.1.2
   image: ^4.1.7
@@ -49,12 +46,13 @@ dependencies:
   flutter_secure_storage: ^9.0.0
 
   # --- Payments (Заготовка) ---
-  pay: ^2.0.0
   webview_flutter: ^4.10.0
   flutter_stripe: ^12.1.1
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+  integration_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   flutter_native_splash: ^2.4.6

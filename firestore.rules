@@ -41,6 +41,12 @@ service cloud.firestore {
         allow create, update, delete: if false;
       }
 
+      // Payment methods are synced by backend (Cloud Functions). Clients can only read.
+      match /payment_methods/{paymentMethodId} {
+        allow read: if isSelf(userId) || isAdmin();
+        allow create, update, delete: if false;
+      }
+
       // In-app notifications (created by backend). Users can read and mark as read.
       match /notifications/{notificationId} {
         allow get, list: if isSelf(userId) || isAdmin();
@@ -105,10 +111,6 @@ service cloud.firestore {
     match /auctions/{auctionId} {
       allow read: if true;
 
-      // DEV-friendly rule: any authenticated user may write auctions.
-      // If you want stricter rules later, remove this and keep only the validated rules below.
-      allow create, update, delete: if isSignedIn();
-
       allow create: if isSignedIn()
         && request.resource.data.sellerId == request.auth.uid
         && request.resource.data.title is string
@@ -148,21 +150,90 @@ service cloud.firestore {
           && request.resource.data.bidCount == resource.data.bidCount + 1;
       }
 
+      function isBuyoutUpdate() {
+        return isSignedIn()
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'currentPrice',
+            'bidCount',
+            'lastBidderId',
+            'winnerId',
+            'status'
+          ])
+          && request.resource.data.winnerId == request.auth.uid
+          && request.resource.data.lastBidderId == request.auth.uid
+          && request.resource.data.status == 'sold'
+          && request.resource.data.currentPrice is number
+          && request.resource.data.bidCount == resource.data.bidCount + 1;
+      }
+
       function isWinnerUpdate() {
-        // Winner may attach shipping info after the auction is sold.
+        // Winner may attach shipping/payment info after the auction is sold.
         return isSignedIn()
           && (request.auth.uid == resource.data.winnerId)
           && request.resource.data.diff(resource.data).changedKeys().hasOnly([
             'deliveryInfo',
-            rules_version = '2';
-            service cloud.firestore {
-              match /databases/{database}/documents {
-                // DEV MODE (emulators): allow read/write for everyone.
-                // This avoids `[permission-denied]` in hybrid mode (real Auth + Firestore emulator).
-                // Tighten these rules before production.
-                match /{document=**} {
-                  allow read, write: if true;
-                }
-              }
-            }
-          && (resource.data.buyoutPrice > 0)
+            'status',
+            'updatedAt'
+          ]);
+      }
+
+      allow update: if isSeller() || isBidUpdate() || isBuyoutUpdate() || isWinnerUpdate();
+      allow delete: if isSeller() && resource.data.status == 'active';
+
+      match /bids/{bidId} {
+        allow read: if true;
+        allow create: if isSignedIn()
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.auctionId == auctionId;
+        allow update, delete: if false;
+      }
+    }
+
+    // Dialogs (chat threads)
+    match /dialogs/{dialogId} {
+      allow read: if isDialogParticipant(dialogId);
+      allow create: if isSignedIn()
+        && request.resource.data.participants is list
+        && request.auth.uid in request.resource.data.participants;
+      allow update: if isDialogParticipant(dialogId)
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+          'updatedAt',
+          'lastMessage',
+          'lastSenderId',
+          'title',
+          'peerDialogId',
+          'auctionId',
+          'participants',
+          'role'
+        ]);
+      allow delete: if false;
+    }
+
+    // Chat messages
+    match /chats/{chatId} {
+      allow read: if isSignedIn()
+        && resource.data.dialogId is string
+        && isDialogParticipant(resource.data.dialogId);
+
+      allow create: if isSignedIn()
+        && request.resource.data.senderId == request.auth.uid
+        && request.resource.data.dialogId is string
+        && isDialogParticipant(request.resource.data.dialogId);
+
+      allow update, delete: if false;
+    }
+
+    // Orders (shipping/checkout)
+    match /orders/{orderId} {
+      allow get: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
+      allow list: if false;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

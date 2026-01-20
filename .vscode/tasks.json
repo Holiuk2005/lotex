@@ -76,7 +76,7 @@
         "--web-browser-flag=--no-default-browser-check",
         "--web-browser-flag=--disable-extensions",
         "--dart-define=USE_FIREBASE_EMULATORS=true",
-        "--dart-define=USE_AUTH_EMULATOR=false"
+        "--dart-define=USE_AUTH_EMULATOR=true"
       ],
       "options": {
         "cwd": "${workspaceFolder}",
