@@ -5,7 +5,6 @@ import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:lotex/core/i18n/language_provider.dart';
@@ -33,7 +32,6 @@ class AuctionDetailsScreen extends ConsumerStatefulWidget {
 }
 
 class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
-  late final NumberFormat _priceFormat;
   bool _isBidSheetOpen = false;
   bool _didAutoOpenShipping = false;
   int _thumbIndex = 0;
@@ -44,8 +42,6 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    _priceFormat = NumberFormat.currency(locale: 'uk_UA', symbol: '₴', decimalDigits: 0);
-
     _placeBidSub = ref.listenManual<AsyncValue<void>>(
       placeBidControllerProvider,
       (prev, next) {
@@ -86,6 +82,14 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
           loading: () {},
         );
       },
+    );
+  }
+
+  String _formatMoney(LotexLanguage lang, num amount) {
+    return LotexI18n.formatCurrency(
+      amount,
+      lang,
+      currency: auction.currency,
     );
   }
 
@@ -228,7 +232,7 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
     if (buyout == null || buyout <= 0) return;
 
     final lang = ref.read(lotexLanguageProvider);
-    final priceText = _priceFormat.format(buyout);
+    final priceText = _formatMoney(lang, buyout);
 
     final ok = await showDialog<bool>(
       context: context,
@@ -780,7 +784,7 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
         ),
         const SizedBox(height: 18),
         _BidCard(
-          currentPriceText: _priceFormat.format(auction.currentPrice),
+          currentPriceText: _formatMoney(lang, auction.currentPrice),
           endsInWidget: AuctionTimer(
             endTime: auction.endDate,
             builder: (context, timeLeft) {
@@ -801,7 +805,7 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
             },
           ),
           onPlaceBid: _showBidSheet,
-          buyoutLabel: showBuyout ? '${LotexI18n.tr(lang, 'buyoutAction')} • ${_priceFormat.format(buyout)}' : null,
+          buyoutLabel: showBuyout ? '${LotexI18n.tr(lang, 'buyoutAction')} • ${_formatMoney(lang, buyout)}' : null,
           onBuyout: showBuyout ? _confirmBuyout : null,
           lang: lang,
         ),
@@ -868,7 +872,7 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
                   child: _HistoryRow(
                     address: title,
                     timeAgo: _timeAgoText(lang, createdAt),
-                    amountText: _priceFormat.format(amount),
+                    amountText: _formatMoney(lang, amount),
                   ),
                 );
               }),

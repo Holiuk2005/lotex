@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:lotex/core/i18n/category_i18n.dart';
+import 'package:lotex/core/i18n/lotex_i18n.dart';
 import 'package:lotex/features/home/models/filter_state.dart';
 import 'package:lotex/services/category_seed_service.dart';
 
@@ -86,6 +88,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   void _onMinChanged(String raw) {
     _priceDebounce?.cancel();
     _priceDebounce = Timer(const Duration(milliseconds: 250), () {
+      if (!mounted) return;
       final min = _parseMoney(raw);
       if (min == null) return;
       _setPriceRange(RangeValues(min, _state.priceRange.end), syncText: false);
@@ -95,6 +98,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   void _onMaxChanged(String raw) {
     _priceDebounce?.cancel();
     _priceDebounce = Timer(const Duration(milliseconds: 250), () {
+      if (!mounted) return;
       final max = _parseMoney(raw);
       if (max == null) return;
       _setPriceRange(RangeValues(_state.priceRange.start, max), syncText: false);
@@ -104,7 +108,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   void _reset() {
     setState(() {
       _state = const FilterState(
-        selectedCategory: null,
+        selectedType: null,
+        selectedSubtypes: <String>[],
         priceRange: RangeValues(_minPrice, _maxPrice),
         sortBy: 'newest',
       );
@@ -117,6 +122,15 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+    final lang = Localizations.localeOf(context).languageCode == 'uk'
+        ? LotexLanguage.uk
+        : LotexLanguage.en;
+
+    final roots = CategoryI18n.roots(widget.categories);
+    final selectedType = _state.selectedType;
+    final subtypes = selectedType == null
+        ? const <CategoryModel>[]
+        : CategoryI18n.childrenOf(widget.categories, selectedType);
 
     return SafeArea(
       child: Padding(
@@ -140,7 +154,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               children: [
                 Expanded(
                   child: Text(
-                    'Фільтри',
+                    LotexI18n.tr(lang, 'filters'),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w900,
                         ),
@@ -148,14 +162,14 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 ),
                 TextButton(
                   onPressed: _reset,
-                  child: const Text('Скинути'),
+                  child: Text(LotexI18n.tr(lang, 'reset')),
                 ),
               ],
             ),
             const SizedBox(height: 10),
 
             Text(
-              'Категорія',
+              LotexI18n.tr(lang, 'category'),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -166,23 +180,68 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               runSpacing: 8,
               children: [
                 ChoiceChip(
-                  label: const Text('Усі'),
-                  selected: _state.selectedCategory == null,
-                  onSelected: (_) => setState(() => _state = _state.copyWith(clearCategory: true)),
+                  label: Text(LotexI18n.tr(lang, 'all')),
+                  selected: _state.selectedType == null && _state.selectedSubtypes.isEmpty,
+                  onSelected: (_) => setState(
+                    () => _state = _state.copyWith(clearType: true, clearSubtypes: true),
+                  ),
                 ),
-                ...widget.categories.map(
+                ...roots.map(
                   (c) => ChoiceChip(
-                    label: Text(c.name),
-                    selected: _state.selectedCategory == c.id,
-                    onSelected: (_) => setState(() => _state = _state.copyWith(selectedCategory: c.id)),
+                    label: Text(CategoryI18n.label(lang, c.id, fallback: c.name)),
+                    selected: _state.selectedType == c.id,
+                    onSelected: (_) => setState(
+                      () => _state = _state.copyWith(
+                        selectedType: c.id,
+                        clearSubtypes: true,
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
 
+            if (selectedType != null && subtypes.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Text(
+                LotexI18n.tr(lang, 'subtypes'),
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilterChip(
+                    label: Text(LotexI18n.tr(lang, 'any')),
+                    selected: _state.selectedSubtypes.isEmpty,
+                    onSelected: (_) => setState(() => _state = _state.copyWith(clearSubtypes: true)),
+                  ),
+                  ...subtypes.map((c) {
+                    final isSelected = _state.selectedSubtypes.contains(c.id);
+                    return FilterChip(
+                      label: Text(CategoryI18n.label(lang, c.id, fallback: c.name)),
+                      selected: isSelected,
+                      onSelected: (_) {
+                        final next = List<String>.from(_state.selectedSubtypes);
+                        if (isSelected) {
+                          next.remove(c.id);
+                        } else {
+                          next.add(c.id);
+                        }
+                        setState(() => _state = _state.copyWith(selectedSubtypes: next));
+                      },
+                    );
+                  }),
+                ],
+              ),
+            ],
+
             const SizedBox(height: 16),
             Text(
-              'Ціна',
+              LotexI18n.tr(lang, 'price'),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -209,8 +268,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       _setPriceRange(RangeValues(min, _state.priceRange.end));
                       FocusScope.of(context).unfocus();
                     },
-                    decoration: const InputDecoration(
-                      labelText: 'Мін',
+                    decoration: InputDecoration(
+                      labelText: LotexI18n.tr(lang, 'min'),
                       suffixText: '₴',
                       border: OutlineInputBorder(),
                     ),
@@ -236,8 +295,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       _setPriceRange(RangeValues(_state.priceRange.start, max));
                       FocusScope.of(context).unfocus();
                     },
-                    decoration: const InputDecoration(
-                      labelText: 'Макс',
+                    decoration: InputDecoration(
+                      labelText: LotexI18n.tr(lang, 'max'),
                       suffixText: '₴',
                       border: OutlineInputBorder(),
                     ),
@@ -260,7 +319,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
             const SizedBox(height: 12),
             Text(
-              'Сортування',
+              LotexI18n.tr(lang, 'sort'),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -269,10 +328,19 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             DropdownButtonFormField<String>(
               key: ValueKey(_state.sortBy),
               initialValue: _state.sortBy,
-              items: const [
-                DropdownMenuItem(value: 'newest', child: Text('Найновіші')),
-                DropdownMenuItem(value: 'price_asc', child: Text('Ціна: спочатку дешевші')),
-                DropdownMenuItem(value: 'price_desc', child: Text('Ціна: спочатку дорожчі')),
+              items: [
+                DropdownMenuItem(
+                  value: 'newest',
+                  child: Text(LotexI18n.tr(lang, 'sortNewest')),
+                ),
+                DropdownMenuItem(
+                  value: 'price_asc',
+                  child: Text(LotexI18n.tr(lang, 'sortPriceAsc')),
+                ),
+                DropdownMenuItem(
+                  value: 'price_desc',
+                  child: Text(LotexI18n.tr(lang, 'sortPriceDesc')),
+                ),
               ],
               onChanged: (v) {
                 if (v == null) return;
@@ -289,7 +357,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               height: 52,
               child: FilledButton(
                 onPressed: () => Navigator.of(context).pop(_state),
-                child: const Text('Застосувати', style: TextStyle(fontWeight: FontWeight.w900)),
+                child: Text(
+                  LotexI18n.tr(lang, 'apply'),
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
               ),
             ),
           ],

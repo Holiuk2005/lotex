@@ -177,12 +177,15 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   Future<void> _buyAndGenerateTtn() async {
     if (_isSubmitting) return;
 
+    final lang = _langOf(context);
+    String tr(String key) => LotexI18n.tr(lang, key);
+
     final receiverCity = _receiverCity;
     final receiverBranch = _receiverBranch;
 
     if (receiverCity == null || receiverBranch == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_tr(context, 'checkoutPickCityAndBranch'))),
+        SnackBar(content: Text(tr('checkoutPickCityAndBranch'))),
       );
       return;
     }
@@ -191,7 +194,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     try {
       final senderCity = await _ensureSenderCity();
       if (senderCity == null) {
-        throw Exception(_tr(context, 'checkoutSenderCityFailed'));
+        throw Exception(tr('checkoutSenderCityFailed'));
       }
 
       // For now we store refs we have (City + Warehouse Ref).
@@ -228,7 +231,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _tr(context, 'checkoutTtnSaved').replaceAll('{ttn}', ttn),
+            tr('checkoutTtnSaved').replaceAll('{ttn}', ttn),
           ),
         ),
       );

@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import 'package:lotex/core/utils/price_calculator.dart';
 import 'package:lotex/core/i18n/lotex_i18n.dart';
+import 'package:lotex/core/utils/currency.dart';
 
 class PaymentBreakdownCard extends StatelessWidget {
   final PriceBreakdown breakdown;
+  final String currency;
 
   const PaymentBreakdownCard({
     super.key,
     required this.breakdown,
+    this.currency = LotexCurrency.uah,
   });
 
   @override
@@ -27,10 +29,9 @@ class PaymentBreakdownCard extends StatelessWidget {
         ? Colors.white.withAlpha((0.10 * 255).round())
         : Colors.black.withAlpha((0.06 * 255).round());
 
-    final uah2 = NumberFormat.currency(
-      locale: localeName,
-      symbol: '₴',
-      decimalDigits: 2,
+    final money = LotexCurrency.formatter(
+      localeName: localeName,
+      code: currency,
     );
 
     return Container(
@@ -44,12 +45,12 @@ class PaymentBreakdownCard extends StatelessWidget {
         children: [
           _Row(
             label: LotexI18n.tr(lang, 'paymentLotPrice'),
-            valueText: uah2.format(breakdown.subtotal),
+            valueText: money.format(breakdown.subtotal),
           ),
           const SizedBox(height: 10),
           _Row(
             label: LotexI18n.tr(lang, 'delivery'),
-            valueText: uah2.format(breakdown.shipping),
+            valueText: money.format(breakdown.shipping),
           ),
           const SizedBox(height: 10),
           _Row(
@@ -74,7 +75,7 @@ class PaymentBreakdownCard extends StatelessWidget {
                 ),
               ],
             ),
-            valueText: uah2.format(breakdown.serviceFee),
+            valueText: money.format(breakdown.serviceFee),
             valueStyle: TextStyle(
               fontWeight: FontWeight.w900,
               color: Colors.white.withAlpha((0.72 * 255).round()),
@@ -85,7 +86,7 @@ class PaymentBreakdownCard extends StatelessWidget {
           const SizedBox(height: 14),
           _Row(
             label: LotexI18n.tr(lang, 'paymentToPay'),
-            valueText: uah2.format(breakdown.total),
+            valueText: money.format(breakdown.total),
             labelStyle: const TextStyle(
               fontWeight: FontWeight.w900,
               color: Colors.white,

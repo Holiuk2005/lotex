@@ -77,6 +77,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lotex/core/i18n/lotex_i18n.dart';
 import 'package:lotex/core/theme/lotex_ui_tokens.dart';
 import 'package:lotex/core/widgets/lotex_app_bar.dart';
 import 'package:lotex/core/utils/human_error.dart';
@@ -87,6 +88,9 @@ class MyLotsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Localizations.localeOf(context).languageCode == 'uk'
+      ? LotexLanguage.uk
+      : LotexLanguage.en;
     final uid = FirebaseAuth.instance.currentUser?.uid;
     final muted = Theme.of(context).brightness == Brightness.dark
       ? LotexUiColors.darkMuted
@@ -170,7 +174,11 @@ class MyLotsScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      '${auction.currentPrice.toStringAsFixed(0)} ₴',
+                                      LotexI18n.formatCurrency(
+                                        auction.currentPrice,
+                                        lang,
+                                        currency: auction.currency,
+                                      ),
                                       style: LotexUiTextStyles.bodyRegular.copyWith(color: muted),
                                     ),
                                   ],

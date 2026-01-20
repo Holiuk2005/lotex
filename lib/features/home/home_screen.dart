@@ -8,6 +8,7 @@ import 'package:lotex/core/widgets/lotex_app_bar.dart';
 import 'package:lotex/core/widgets/lotex_background.dart';
 import 'package:lotex/core/i18n/language_provider.dart';
 import 'package:lotex/core/i18n/lotex_i18n.dart';
+import 'package:lotex/core/i18n/category_i18n.dart';
 import 'package:lotex/features/auction/domain/entities/auction_entity.dart';
 import 'package:lotex/features/auction/presentation/widgets/auction_card.dart';
 import 'package:lotex/features/auth/presentation/providers/auth_state_provider.dart';
@@ -30,13 +31,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   static const double _minPrice = 0;
   static const double _maxPrice = 100000;
 
+  List<String> _effectiveCategoryIds() {
+    final selectedType = _filters.selectedType;
+    final selectedSubtypes = _filters.selectedSubtypes;
+
+    if (selectedType == null) {
+      return selectedSubtypes;
+    }
+
+    if (selectedSubtypes.isNotEmpty) {
+      return selectedSubtypes;
+    }
+
+    final children = CategoryI18n.childrenOf(CategorySeedService.categories, selectedType);
+    return children.map((c) => c.id).toList(growable: false);
+  }
+
   Query<Map<String, dynamic>> getFilteredQuery() {
     final hasPriceFilter = _filters.priceRange.start > _minPrice || _filters.priceRange.end < _maxPrice;
 
     Query<Map<String, dynamic>> q = FirebaseFirestore.instance.collection('auctions');
 
-    if (_filters.selectedCategory != null) {
-      q = q.where('category', isEqualTo: _filters.selectedCategory);
+    final categoryIds = _effectiveCategoryIds();
+    if (categoryIds.isNotEmpty) {
+      final ids = categoryIds.take(10).toList(growable: false);
+      if (ids.length == 1) {
+        final id = ids.first;
+        q = q.where(
+          Filter.or(
+            Filter('category', isEqualTo: id),
+            Filter('categoryIds', arrayContains: id),
+          ),
+        );
+      } else {
+        q = q.where(
+          Filter.or(
+            Filter('category', whereIn: ids),
+            Filter('categoryIds', arrayContainsAny: ids),
+          ),
+        );
+      }
     }
 
     if (hasPriceFilter) {
@@ -65,11 +99,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return q;
   }
 
-  String? _selectedCategoryLabel() {
-    final id = _filters.selectedCategory;
-    if (id == null) return null;
-    final hit = CategorySeedService.categories.where((c) => c.id == id).toList(growable: false);
-    return hit.isEmpty ? id : hit.first.name;
+  String? _selectedCategoryLabel(LotexLanguage lang) {
+    final ids = _effectiveCategoryIds();
+    if (ids.isEmpty) return null;
+
+    if (ids.length == 1) {
+      return CategoryI18n.label(lang, ids.first);
+    }
+
+    return '${CategoryI18n.label(lang, ids.first)} +${ids.length - 1}';
   }
 
   Future<void> _openFilterSheet() async {
@@ -107,7 +145,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final width = MediaQuery.sizeOf(context).width;
     final crossAxisCount = width >= 1100 ? 3 : (width >= 700 ? 2 : 1);
 
-    final categoryLabel = _selectedCategoryLabel();
+    final categoryLabel = _selectedCategoryLabel(lang);
 
     return Scaffold(
       appBar: const LotexAppBar(showDesktopSearch: true, showThemeToggle: false),
@@ -154,7 +192,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                   final user = ref.watch(currentUserProvider);
                   final subs = ref.watch(subscribedCategoriesProvider).valueOrNull ?? <String>{};
-                  final selectedCategoryId = _filters.selectedCategory;
+                  final effectiveIds = _effectiveCategoryIds();
+                  final selectedCategoryId = effectiveIds.length == 1 ? effectiveIds.first : null;
                   final isSubscribed = selectedCategoryId != null && subs.contains(selectedCategoryId);
 
                   final filterRow = _FilterRow(

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import 'package:lotex/core/i18n/language_provider.dart';
 import 'package:lotex/core/i18n/lotex_i18n.dart';
@@ -37,8 +36,11 @@ Future<void> runBuyoutFlow({
   final buyout = auction.buyoutPrice;
   if (buyout == null || buyout <= 0) return;
 
-  final priceFormat = NumberFormat.decimalPattern('uk_UA');
-  final priceText = priceFormat.format(buyout);
+  final priceText = LotexI18n.formatCurrency(
+    buyout,
+    lang,
+    currency: auction.currency,
+  );
 
   final ok = await showDialog<bool>(
     context: context,

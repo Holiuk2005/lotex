@@ -68,8 +68,11 @@ Future<void> showPlaceBidModal({
         }
 
         ref.listen<AsyncValue<void>>(placeBidControllerProvider, (prev, next) {
+          final wasLoading = prev?.isLoading ?? false;
+          if (!wasLoading) return;
           next.whenOrNull(
             data: (_) {
+              if (!modalContext.mounted) return;
               if (Navigator.of(modalContext).canPop()) {
                 Navigator.of(modalContext).pop();
               }

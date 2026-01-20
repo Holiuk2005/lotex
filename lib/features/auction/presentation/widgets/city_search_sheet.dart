@@ -38,8 +38,10 @@ class _CitySearchState extends State<CitySearch> {
   }
 
   Future<void> _runSearch(String query) async {
+    if (!mounted) return;
     final q = query.trim();
     if (q.length < 2) {
+      if (!mounted) return;
       setState(() {
         _results = const [];
         _isLoading = false;
@@ -48,6 +50,7 @@ class _CitySearchState extends State<CitySearch> {
       return;
     }
 
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _error = null;
@@ -74,6 +77,7 @@ class _CitySearchState extends State<CitySearch> {
     // Debounce: wait 500ms after user stops typing before calling API.
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
       _runSearch(value);
     });
   }

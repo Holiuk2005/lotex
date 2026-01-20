@@ -89,6 +89,9 @@ class AuctionRepository {
     required String title,
     required String description,
     required String category,
+    String? categoryType,
+    List<String>? categoryIds,
+    String currency = 'UAH',
     required double startPrice,
     required DateTime endDate,
     required Object imageFile, // File, XFile or Uint8List
@@ -185,6 +188,7 @@ class AuctionRepository {
         imageUrl: imageUrl,
         imageBase64: base64Image,
         category: category.trim(),
+        currency: currency.trim().toUpperCase(),
         startPrice: startPrice,
         currentPrice: startPrice,
         buyoutPrice: buyoutPrice,
@@ -192,7 +196,21 @@ class AuctionRepository {
         sellerId: sellerId,
       );
       mark('firestoreCreate');
-      await docRef.set(auction.toDocument()).timeout(firestoreWriteTimeout);
+      final normalizedCategoryIds = <String>{
+        if (auction.category.trim().isNotEmpty) auction.category.trim(),
+        ...?categoryIds?.map((e) => e.trim()).where((e) => e.isNotEmpty),
+      }.toList(growable: false);
+
+      await docRef
+          .set(
+            {
+              ...auction.toDocument(),
+              if (categoryType != null && categoryType.trim().isNotEmpty)
+                'categoryType': categoryType.trim(),
+              if (normalizedCategoryIds.isNotEmpty) 'categoryIds': normalizedCategoryIds,
+            },
+          )
+          .timeout(firestoreWriteTimeout);
 
       // 2) If image is too large for Firestore, upload to Storage and update the doc.
       if (bytes.isNotEmpty && bytes.lengthInBytes > maxImageBytes && !useFirestoreImageOnWeb) {

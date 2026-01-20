@@ -1,7 +1,6 @@
 import 'dart:convert' as convert;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:lotex/core/i18n/language_provider.dart';
 import 'package:lotex/core/i18n/lotex_i18n.dart';
 import 'package:lotex/core/theme/lotex_ui_tokens.dart';
@@ -23,7 +22,6 @@ class AuctionCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lang = ref.watch(lotexLanguageProvider);
-    final priceFormat = NumberFormat.currency(locale: 'uk_UA', symbol: '₴', decimalDigits: 0);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final isFavorite = ref.watch(favoritesProvider.select((s) => s.contains(auction.id)));
@@ -180,7 +178,11 @@ class AuctionCard extends ConsumerWidget {
                               const Icon(Icons.trending_up, size: 16, color: Color(0xFF10B981)),
                               const SizedBox(width: 6),
                               Text(
-                                priceFormat.format(auction.currentPrice),
+                                LotexI18n.formatCurrency(
+                                  auction.currentPrice,
+                                  lang,
+                                  currency: auction.currency,
+                                ),
                                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: titleColor),
                               ),
                             ],

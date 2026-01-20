@@ -14,6 +14,8 @@ import '../providers/create_auction_controller.dart';
 import '../widgets/lotex_input.dart';
 import 'package:lotex/core/i18n/language_provider.dart';
 import 'package:lotex/core/i18n/lotex_i18n.dart';
+import 'package:lotex/core/i18n/category_i18n.dart';
+import 'package:lotex/core/utils/currency.dart';
 import 'package:lotex/core/utils/human_error.dart';
 import '../providers/create_submit_provider.dart';
 import 'package:lotex/services/category_seed_service.dart';
@@ -34,7 +36,10 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
   final _buyoutPriceController = TextEditingController();
   final _dateController = TextEditingController();
 
-  String? _selectedCategoryId;
+  String? _selectedTypeId;
+  Set<String> _selectedSubtypeIds = <String>{};
+
+  String _currency = LotexCurrency.uah;
 
   DateTime? _selectedDate;
   XFile? _pickedImage;
@@ -166,14 +171,17 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
         return;
       }
 
-      final category = (_selectedCategoryId ?? '').trim();
-      if (category.isEmpty) {
+      final typeId = (_selectedTypeId ?? '').trim();
+      final subtypes = _selectedSubtypeIds.toList(growable: false);
+      if (typeId.isEmpty || subtypes.isEmpty) {
         final lang = ref.read(lotexLanguageProvider);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(LotexI18n.tr(lang, 'selectCategoryRequired'))),
         );
         return;
       }
+
+      final category = subtypes.first;
 
       final startPrice =
           double.parse(_startPriceController.text.replaceAll(',', '.'));
@@ -189,7 +197,10 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
       ref.read(createAuctionControllerProvider.notifier).create(
             title: _titleController.text,
             description: _descController.text,
-        category: category,
+            category: category,
+            categoryType: typeId,
+            categoryIds: subtypes,
+        currency: _currency,
             startPrice: startPrice,
             buyoutPrice: buyoutPrice,
             endDate: _selectedDate!,
@@ -208,7 +219,8 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
       if (isLoading) return false;
       if (_pickedImage == null) return false;
       if (_selectedDate == null) return false;
-      if ((_selectedCategoryId ?? '').trim().isEmpty) return false;
+      if ((_selectedTypeId ?? '').trim().isEmpty) return false;
+      if (_selectedSubtypeIds.isEmpty) return false;
 
       if (_titleController.text.trim().isEmpty) return false;
       if (_descController.text.trim().isEmpty) return false;
@@ -227,18 +239,16 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
     }
 
     final categories = CategorySeedService.categories;
-    final categoryItems = <DropdownMenuItem<String>>[
-      for (final c in categories)
-        DropdownMenuItem<String>(
-          value: c.id,
-          child: Text(
-            c.parentId == null ? c.name : '— ${c.name}',
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-    ];
+    final roots = CategoryI18n.roots(categories);
+    _selectedTypeId ??= roots.isNotEmpty ? roots.first.id : null;
 
-    _selectedCategoryId ??= categories.isNotEmpty ? categories.first.id : null;
+    final selectedType = _selectedTypeId;
+    final subtypes = selectedType == null
+        ? const <CategoryModel>[]
+        : CategoryI18n.childrenOf(categories, selectedType);
+    if (_selectedSubtypeIds.isEmpty && subtypes.isNotEmpty) {
+      _selectedSubtypeIds = <String>{subtypes.first.id};
+    }
 
     // Reserve space at the bottom so content never hides behind the pinned action bar.
     const double actionBarHeight = 72;
@@ -388,38 +398,144 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Theme.of(context).dividerColor),
                         ),
-                        child: FormField<String>(
-                          initialValue: _selectedCategoryId,
-                          validator: (v) {
-                            if (v == null || v.trim().isEmpty) {
-                              return LotexI18n.tr(lang, 'selectCategoryRequired');
-                            }
-                            return null;
-                          },
-                          builder: (field) {
-                            return InputDecorator(
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                                errorText: field.errorText,
-                              ),
-                              child: DropdownButtonHideUnderline(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              DropdownButtonHideUnderline(
                                 child: DropdownButton<String>(
-                                  value: (_selectedCategoryId ?? '').isNotEmpty ? _selectedCategoryId : field.value,
+                                  value: _selectedTypeId,
                                   isExpanded: true,
-                                  items: categoryItems,
+                                  items: [
+                                    for (final c in roots)
+                                      DropdownMenuItem<String>(
+                                        value: c.id,
+                                        child: Text(
+                                          CategoryI18n.label(lang, c.id, fallback: c.name),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                  ],
                                   onChanged: isLoading
                                       ? null
                                       : (v) {
                                           setState(() {
-                                            _selectedCategoryId = v;
+                                            _selectedTypeId = v;
+                                            _selectedSubtypeIds = <String>{};
                                           });
-                                          field.didChange(v);
                                         },
                                 ),
                               ),
-                            );
-                          },
+                              if (selectedType != null && subtypes.isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    for (final c in subtypes)
+                                      FilterChip(
+                                        label: Text(CategoryI18n.label(lang, c.id, fallback: c.name)),
+                                        selected: _selectedSubtypeIds.contains(c.id),
+                                        onSelected: isLoading
+                                            ? null
+                                            : (on) {
+                                                setState(() {
+                                                  final next = Set<String>.from(_selectedSubtypeIds);
+                                                  if (on) {
+                                                    next.add(c.id);
+                                                  } else {
+                                                    next.remove(c.id);
+                                                  }
+                                                  _selectedSubtypeIds = next;
+                                                });
+                                              },
+                                      ),
+                                  ],
+                                ),
+                              ] else ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  LotexI18n.tr(lang, 'selectCategoryRequired'),
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: LotexUiColors.slate400,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        LotexI18n.tr(lang, 'currencyLabel'),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ) ??
+                            const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Theme.of(context).dividerColor),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _currency,
+                              isExpanded: true,
+                              items: const [
+                                DropdownMenuItem<String>(
+                                  value: LotexCurrency.uah,
+                                  child: Text('UAH'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: LotexCurrency.usd,
+                                  child: Text('USD'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: LotexCurrency.eur,
+                                  child: Text('EUR'),
+                                ),
+                              ],
+                              selectedItemBuilder: (context) {
+                                String labelFor(String code) {
+                                  return switch (code) {
+                                    LotexCurrency.uah => LotexI18n.tr(lang, 'currencyUAH'),
+                                    LotexCurrency.usd => LotexI18n.tr(lang, 'currencyUSD'),
+                                    LotexCurrency.eur => LotexI18n.tr(lang, 'currencyEUR'),
+                                    _ => code,
+                                  };
+                                }
+
+                                return LotexCurrency.supported
+                                    .map((c) => Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: Text(
+                                            labelFor(c),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ))
+                                    .toList(growable: false);
+                              },
+                              onChanged: isLoading
+                                  ? null
+                                  : (v) {
+                                      if (v == null) return;
+                                      setState(() => _currency = v);
+                                    },
+                            ),
+                          ),
                         ),
                       ),
                     ],

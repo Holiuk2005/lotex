@@ -1,3 +1,6 @@
+import 'package:intl/intl.dart';
+import 'package:lotex/core/utils/currency.dart';
+
 enum LotexLanguage { en, uk }
 
 class LotexI18n {
@@ -30,6 +33,32 @@ class LotexI18n {
       'createListingSubtitle': 'Upload your digital artwork or collectible to start an auction.',
       'productName': 'Product Name',
       'category': 'Category',
+
+      // Categories (type/subtype)
+      'cat_transport': 'Transport',
+      'cat_real_estate': 'Real Estate',
+      'cat_electronics': 'Electronics',
+      'cat_home_garden': 'Home & Garden',
+      'cat_fashion': 'Fashion',
+      'cat_kids': 'Kids',
+      'cat_hobbies': 'Hobbies',
+      'cat_animals': 'Animals',
+      'cat_cars': 'Cars',
+      'cat_two_wheeler': 'Moto',
+      'cat_apartments': 'Apartments',
+      'cat_houses': 'Houses',
+      'cat_smartphones': 'Smartphones',
+      'cat_laptops': 'Laptops',
+      'cat_furniture': 'Furniture',
+      'cat_decor': 'Decor',
+      'cat_mens_clothing': "Men's Clothing",
+      'cat_womens_clothing': "Women's Clothing",
+      'cat_toys': 'Toys',
+      'cat_strollers': 'Strollers',
+      'cat_sport': 'Sport',
+      'cat_music': 'Music',
+      'cat_dogs': 'Dogs',
+      'cat_cats': 'Cats',
       'endDate': 'End Date',
       'startingBid': 'Starting Bid',
       'buyoutPrice': 'Buyout Price',
@@ -71,6 +100,10 @@ class LotexI18n {
       'wonAuctions': 'Won Auctions',
       'active': 'Active',
       'currency': 'UAH',
+      'currencyLabel': 'Currency',
+      'currencyUAH': 'Hryvnia (UAH)',
+      'currencyUSD': 'Dollar (USD)',
+      'currencyEUR': 'Euro (EUR)',
       'welcome': 'Welcome back',
       'balance': 'Balance',
       'currentBalance': 'Current Balance',
@@ -84,6 +117,16 @@ class LotexI18n {
       'saved': 'Saved',
       'savedDescription': "Keep track of the auctions you're interested in.",
       'filters': 'Filters',
+      'all': 'All',
+      'any': 'Any',
+      'subtypes': 'Subtypes',
+      'price': 'Price',
+      'sort': 'Sort',
+      'sortNewest': 'Newest',
+      'sortPriceAsc': 'Price: low to high',
+      'sortPriceDesc': 'Price: high to low',
+      'min': 'Min',
+      'max': 'Max',
       'region': 'Region',
       'delivery': 'Delivery',
       'minBid': 'Min Bid',
@@ -294,6 +337,32 @@ class LotexI18n {
       'createListingSubtitle': 'Завантажте цифрове мистецтво або колекційний предмет, щоб розпочати аукціон.',
       'productName': 'Назва товару',
       'category': 'Категорія',
+
+      // Categories (type/subtype)
+      'cat_transport': 'Транспорт',
+      'cat_real_estate': 'Нерухомість',
+      'cat_electronics': 'Електроніка',
+      'cat_home_garden': 'Дім і сад',
+      'cat_fashion': 'Одяг і стиль',
+      'cat_kids': 'Діти',
+      'cat_hobbies': 'Хобі',
+      'cat_animals': 'Тварини',
+      'cat_cars': 'Авто',
+      'cat_two_wheeler': 'Мото',
+      'cat_apartments': 'Квартири',
+      'cat_houses': 'Будинки',
+      'cat_smartphones': 'Смартфони',
+      'cat_laptops': 'Ноутбуки',
+      'cat_furniture': 'Меблі',
+      'cat_decor': 'Декор',
+      'cat_mens_clothing': 'Чоловічий одяг',
+      'cat_womens_clothing': 'Жіночий одяг',
+      'cat_toys': 'Іграшки',
+      'cat_strollers': 'Візочки',
+      'cat_sport': 'Спорт',
+      'cat_music': 'Музика',
+      'cat_dogs': 'Собаки',
+      'cat_cats': 'Коти',
       'endDate': 'До якого числа',
       'startingBid': 'Початкова ставка',
       'buyoutPrice': 'Ціна викупу',
@@ -335,6 +404,10 @@ class LotexI18n {
       'wonAuctions': 'Виграні аукціони',
       'active': 'Активні',
       'currency': '₴',
+      'currencyLabel': 'Валюта',
+      'currencyUAH': 'Гривня (UAH)',
+      'currencyUSD': 'Долар (USD)',
+      'currencyEUR': 'Євро (EUR)',
       'welcome': 'З поверненням',
       'balance': 'Баланс',
       'currentBalance': 'Поточний баланс',
@@ -348,6 +421,16 @@ class LotexI18n {
       'saved': 'Збережені',
       'savedDescription': 'Зберігайте лоти, які вас цікавлять.',
       'filters': 'Фільтри',
+      'all': 'Усі',
+      'any': 'Будь-які',
+      'subtypes': 'Підкатегорії',
+      'price': 'Ціна',
+      'sort': 'Сортування',
+      'sortNewest': 'Найновіші',
+      'sortPriceAsc': 'Ціна: спочатку дешевші',
+      'sortPriceDesc': 'Ціна: спочатку дорожчі',
+      'min': 'Мін',
+      'max': 'Макс',
       'region': 'Регіон',
       'delivery': 'Доставка',
       'minBid': 'Мін. ставка',
@@ -536,10 +619,17 @@ class LotexI18n {
     return _t[lang]?[key] ?? _t[LotexLanguage.en]?[key] ?? key;
   }
 
-  static String formatCurrency(num amount, LotexLanguage lang) {
-    final currency = tr(lang, 'currency');
-    final raw = amount.round().toString();
-    final formatted = raw.replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ' ');
-    return '$formatted $currency';
+  static String formatCurrency(
+    num amount,
+    LotexLanguage lang, {
+    String currency = 'UAH',
+    int? decimalDigits,
+  }) {
+    final localeName = lang == LotexLanguage.uk ? 'uk_UA' : 'en_US';
+    return LotexCurrency.formatter(
+      localeName: localeName,
+      code: currency,
+      decimalDigits: decimalDigits,
+    ).format(amount);
   }
 }

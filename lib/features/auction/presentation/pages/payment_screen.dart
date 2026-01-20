@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import 'package:lotex/core/i18n/language_provider.dart';
 import 'package:lotex/core/i18n/lotex_i18n.dart';
@@ -112,7 +111,6 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final lang = ref.watch(lotexLanguageProvider);
-    final priceFormat = NumberFormat.currency(locale: 'uk_UA', symbol: '₴', decimalDigits: 0);
 
     final auctionStream = FirebaseFirestore.instance.collection('auctions').doc(widget.auctionId).snapshots();
 
@@ -135,6 +133,12 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
               final imageUrl = (data?['imageUrl'] as String?)?.trim();
               final currentPrice = (data?['currentPrice'] as num?)?.toDouble() ?? 0.0;
+              final currency = ((data?['currency'] as String?) ?? 'UAH').trim();
+              final currentPriceText = LotexI18n.formatCurrency(
+                currentPrice,
+                lang,
+                currency: currency,
+              );
 
               final deliveryInfo = data?['deliveryInfo'];
               final providerRaw = (deliveryInfo is Map) ? deliveryInfo['provider'] : null;
@@ -213,12 +217,12 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                           const SizedBox(height: 10),
                           _SummaryRow(
                             label: LotexI18n.tr(lang, 'paymentLotPrice'),
-                            value: priceFormat.format(currentPrice),
+                            value: currentPriceText,
                           ),
                           const SizedBox(height: 6),
                           _SummaryRow(
                             label: LotexI18n.tr(lang, 'paymentToPay'),
-                            value: priceFormat.format(currentPrice),
+                            value: currentPriceText,
                             bold: true,
                           ),
                         ],

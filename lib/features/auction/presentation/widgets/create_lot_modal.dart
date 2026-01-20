@@ -4,7 +4,9 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/i18n/language_provider.dart';
 import '../../../../core/i18n/lotex_i18n.dart';
+import '../../../../core/i18n/category_i18n.dart';
 import '../../../../core/theme/lotex_ui_tokens.dart';
+import '../../../../core/utils/currency.dart';
 import '../../../../core/widgets/lotex_modal.dart';
 import '../providers/create_auction_controller.dart';
 import 'package:lotex/services/category_seed_service.dart';
@@ -20,7 +22,9 @@ Future<void> showCreateLotModal({
   final startCtrl = TextEditingController();
   DateTime endDate = DateTime.now().add(const Duration(days: 1));
   XFile? image;
-  String? selectedCategoryId;
+  String? selectedTypeId;
+  Set<String> selectedSubtypeIds = <String>{};
+  String currency = LotexCurrency.uah;
 
   await showLotexModal<void>(
     context: context,
@@ -30,8 +34,11 @@ Future<void> showCreateLotModal({
         final state = ref.watch(createAuctionControllerProvider);
 
         ref.listen<AsyncValue<void>>(createAuctionControllerProvider, (prev, next) {
+          final wasLoading = prev?.isLoading ?? false;
+          if (!wasLoading) return;
           next.whenOrNull(
             data: (_) {
+              if (!context.mounted) return;
               if (Navigator.of(context).canPop()) Navigator.of(context).pop();
             },
           );
@@ -67,7 +74,14 @@ Future<void> showCreateLotModal({
         return StatefulBuilder(
           builder: (context, setState) {
             final categories = CategorySeedService.categories;
-            selectedCategoryId ??= categories.isNotEmpty ? categories.first.id : null;
+            final roots = CategoryI18n.roots(categories);
+            selectedTypeId ??= roots.isNotEmpty ? roots.first.id : null;
+
+            final typeId = selectedTypeId;
+            final subtypes = typeId == null ? const <CategoryModel>[] : CategoryI18n.childrenOf(categories, typeId);
+            if (selectedSubtypeIds.isEmpty && subtypes.isNotEmpty) {
+              selectedSubtypeIds = <String>{subtypes.first.id};
+            }
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -80,44 +94,133 @@ Future<void> showCreateLotModal({
                 _field(descCtrl, maxLines: 4, hint: ''),
                 const SizedBox(height: 12),
 
-                _label(LotexI18n.tr(lang, 'startingBid')),
-                _field(startCtrl, keyboardType: TextInputType.number, hint: LotexI18n.tr(lang, 'currency')),
-                const SizedBox(height: 12),
-
-                _label(LotexI18n.tr(lang, 'category')),
+                _label(LotexI18n.tr(lang, 'currencyLabel')),
                 SizedBox(
-                  height: 48,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       color: Colors.white.withAlpha((0.06 * 255).round()),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.white.withAlpha((0.08 * 255).round())),
                     ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: selectedCategoryId,
-                        isExpanded: true,
-                        dropdownColor: const Color(0xFF111827),
-                        iconEnabledColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        items: [
-                          for (final c in categories)
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: currency,
+                          isExpanded: true,
+                          dropdownColor: const Color(0xFF111827),
+                          iconEnabledColor: Colors.white,
+                          items: [
                             DropdownMenuItem<String>(
-                              value: c.id,
+                              value: LotexCurrency.uah,
                               child: Text(
-                                c.parentId == null ? c.name : '— ${c.name}',
+                                LotexI18n.tr(lang, 'currencyUAH'),
                                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            DropdownMenuItem<String>(
+                              value: LotexCurrency.usd,
+                              child: Text(
+                                LotexI18n.tr(lang, 'currencyUSD'),
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                            DropdownMenuItem<String>(
+                              value: LotexCurrency.eur,
+                              child: Text(
+                                LotexI18n.tr(lang, 'currencyEUR'),
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ],
+                          onChanged: state.isLoading
+                              ? null
+                              : (v) {
+                                  if (v == null) return;
+                                  setState(() => currency = v);
+                                },
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                _label(LotexI18n.tr(lang, 'startingBid')),
+                _field(startCtrl, keyboardType: TextInputType.number, hint: '0.0'),
+                const SizedBox(height: 12),
+
+                _label(LotexI18n.tr(lang, 'category')),
+                SizedBox(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha((0.06 * 255).round()),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withAlpha((0.08 * 255).round())),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: selectedTypeId,
+                              isExpanded: true,
+                              dropdownColor: const Color(0xFF111827),
+                              iconEnabledColor: Colors.white,
+                              items: [
+                                for (final c in roots)
+                                  DropdownMenuItem<String>(
+                                    value: c.id,
+                                    child: Text(
+                                      CategoryI18n.label(lang, c.id, fallback: c.name),
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                              ],
+                              onChanged: state.isLoading
+                                  ? null
+                                  : (v) {
+                                      setState(() {
+                                        selectedTypeId = v;
+                                        selectedSubtypeIds = <String>{};
+                                      });
+                                    },
+                            ),
+                          ),
+                          if (typeId != null && subtypes.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                for (final c in subtypes)
+                                  FilterChip(
+                                    label: Text(
+                                      CategoryI18n.label(lang, c.id, fallback: c.name),
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                                    ),
+                                    selected: selectedSubtypeIds.contains(c.id),
+                                    onSelected: state.isLoading
+                                        ? null
+                                        : (on) {
+                                            setState(() {
+                                              final next = Set<String>.from(selectedSubtypeIds);
+                                              if (on) {
+                                                next.add(c.id);
+                                              } else {
+                                                next.remove(c.id);
+                                              }
+                                              selectedSubtypeIds = next;
+                                            });
+                                          },
+                                  ),
+                              ],
+                            ),
+                          ]
                         ],
-                        onChanged: state.isLoading
-                            ? null
-                            : (v) {
-                                setState(() {
-                                  selectedCategoryId = v;
-                                });
-                              },
                       ),
                     ),
                   ),
@@ -193,14 +296,16 @@ Future<void> showCreateLotModal({
                               final title = titleCtrl.text.trim();
                               final desc = descCtrl.text.trim();
                               final start = double.tryParse(startCtrl.text.trim().replaceAll(' ', ''));
-                              final category = (selectedCategoryId ?? '').trim();
+                              final typeId = (selectedTypeId ?? '').trim();
+                              final subtypes = selectedSubtypeIds.toList(growable: false);
+                              final category = subtypes.isNotEmpty ? subtypes.first : '';
                               if (title.isEmpty || start == null || image == null) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('Заповніть поля і додайте фото')),
                                 );
                                 return;
                               }
-                              if (category.isEmpty) {
+                              if (typeId.isEmpty || subtypes.isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text(LotexI18n.tr(lang, 'selectCategoryRequired'))),
                                 );
@@ -210,6 +315,9 @@ Future<void> showCreateLotModal({
                                     title: title,
                                     description: desc,
                                     category: category,
+                                    categoryType: typeId,
+                                    categoryIds: subtypes,
+                                currency: currency,
                                     startPrice: start,
                                     endDate: endDate,
                                     image: image!,
