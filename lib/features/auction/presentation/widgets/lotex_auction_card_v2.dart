@@ -1,6 +1,6 @@
-import 'dart:convert' as convert;
 import 'dart:math' as math;
 import 'dart:ui';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/i18n/language_provider.dart';
 import '../../../../core/i18n/lotex_i18n.dart';
 import '../../../../core/theme/lotex_ui_tokens.dart';
+import '../../../../core/utils/base64_image_cache.dart';
 import '../../../favorites/presentation/providers/favorites_provider.dart';
 import '../../domain/entities/auction_entity.dart';
 import 'auction_timer.dart';
@@ -64,18 +65,28 @@ class _LotexAuctionCardV2State extends ConsumerState<LotexAuctionCardV2> {
     final title = auction.title;
     final artist = auction.sellerId.isEmpty ? LotexI18n.tr(lang, 'unknown') : auction.sellerId;
 
+    Uint8List? base64Bytes;
+    if (auction.imageBase64 != null && auction.imageBase64!.trim().isNotEmpty) {
+      base64Bytes = Base64ImageCache.decode(
+        auction.imageBase64!,
+        cacheKey: 'auction:${auction.id}',
+      );
+    }
+
     final Widget imageWidget;
     if (auction.imageUrl.trim().isNotEmpty) {
       imageWidget = Image.network(
         auction.imageUrl,
         fit: BoxFit.cover,
+        filterQuality: FilterQuality.low,
         errorBuilder: (_, __, ___) => _fallbackImage(),
       );
-    } else if (auction.imageBase64 != null && auction.imageBase64!.trim().isNotEmpty) {
-      final bytes = convert.base64Decode(auction.imageBase64!);
+    } else if (base64Bytes != null) {
       imageWidget = Image.memory(
-        bytes,
+        base64Bytes,
         fit: BoxFit.cover,
+        filterQuality: FilterQuality.low,
+        gaplessPlayback: true,
         errorBuilder: (_, __, ___) => _fallbackImage(),
       );
     } else {

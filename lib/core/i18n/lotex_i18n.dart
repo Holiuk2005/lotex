@@ -1,4 +1,3 @@
-import 'package:intl/intl.dart';
 import 'package:lotex/core/utils/currency.dart';
 
 enum LotexLanguage { en, uk }

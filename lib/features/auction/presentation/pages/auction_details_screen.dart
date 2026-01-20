@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lotex/core/i18n/language_provider.dart';
 import 'package:lotex/core/i18n/lotex_i18n.dart';
 import 'package:lotex/core/utils/human_error.dart';
+import 'package:lotex/core/utils/base64_image_cache.dart';
 import 'package:lotex/core/theme/lotex_ui_tokens.dart';
 import 'package:lotex/core/widgets/app_input.dart';
 import 'package:lotex/core/widgets/lotex_background.dart';
@@ -344,7 +345,11 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
   ImageProvider? _auctionImageProvider() {
     final base64 = auction.imageBase64;
     if (base64 != null && base64.isNotEmpty) {
-      return MemoryImage(base64Decode(base64));
+      final Uint8List? bytes = Base64ImageCache.decode(
+        base64,
+        cacheKey: 'auction:${auction.id}',
+      );
+      if (bytes != null) return MemoryImage(bytes);
     }
     if (auction.imageUrl.isNotEmpty) {
       return NetworkImage(auction.imageUrl);

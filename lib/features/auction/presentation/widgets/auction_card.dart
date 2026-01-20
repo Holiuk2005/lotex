@@ -1,8 +1,9 @@
-import 'dart:convert' as convert;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lotex/core/i18n/language_provider.dart';
 import 'package:lotex/core/i18n/lotex_i18n.dart';
+import 'package:lotex/core/utils/base64_image_cache.dart';
 import 'package:lotex/core/theme/lotex_ui_tokens.dart';
 import 'package:lotex/features/auction/domain/entities/auction_entity.dart';
 import 'package:lotex/features/favorites/presentation/providers/favorites_provider.dart';
@@ -34,6 +35,14 @@ class AuctionCard extends ConsumerWidget {
     final titleColor = isDark ? Colors.white : Theme.of(context).colorScheme.onSurface;
     final muted = isDark ? LotexUiColors.slate400 : LotexUiColors.slate500;
 
+    Uint8List? base64Bytes;
+    if (auction.imageBase64 != null && auction.imageBase64!.isNotEmpty) {
+      base64Bytes = Base64ImageCache.decode(
+        auction.imageBase64!,
+        cacheKey: 'auction:${auction.id}',
+      );
+    }
+
     return InkWell(
       borderRadius: BorderRadius.circular(24),
       onTap: onTap,
@@ -59,12 +68,18 @@ class AuctionCard extends ConsumerWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  if (auction.imageBase64 != null && auction.imageBase64!.isNotEmpty)
-                    Image.memory(convert.base64Decode(auction.imageBase64!), fit: BoxFit.cover)
+                  if (base64Bytes != null)
+                    Image.memory(
+                      base64Bytes,
+                      fit: BoxFit.cover,
+                      filterQuality: FilterQuality.low,
+                      gaplessPlayback: true,
+                    )
                   else if (auction.imageUrl.isNotEmpty)
                     Image.network(
                       auction.imageUrl,
                       fit: BoxFit.cover,
+                      filterQuality: FilterQuality.low,
                       errorBuilder: (_, __, ___) {
                         return Container(
                           color: isDark ? LotexUiColors.slate900 : LotexUiColors.lightBackground,
