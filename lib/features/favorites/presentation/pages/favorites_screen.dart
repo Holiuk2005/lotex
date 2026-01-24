@@ -6,6 +6,7 @@ import 'package:lotex/core/widgets/lotex_background.dart';
 import 'package:lotex/core/i18n/language_provider.dart';
 import 'package:lotex/core/i18n/lotex_i18n.dart';
 import 'package:lotex/core/utils/human_error.dart';
+import 'package:lotex/core/widgets/empty_state_widget.dart';
 import 'package:lotex/features/auction/presentation/providers/auction_list_provider.dart';
 import 'package:lotex/features/auction/presentation/utils/buyout_flow.dart';
 import 'package:lotex/features/favorites/presentation/providers/favorites_provider.dart';
@@ -31,22 +32,11 @@ class FavoritesScreen extends ConsumerWidget {
               data: (auctions) {
                 final items = auctions.where((a) => favoriteIds.contains(a.id)).toList(growable: false);
                 if (items.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.favorite_border, size: 64, color: LotexUiColors.violet500),
-                          const SizedBox(height: 16),
-                          Text(
-                            LotexI18n.tr(lang, 'favoritesEmpty'),
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: LotexUiColors.slate400),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
+                  return EmptyStateWidget(
+                    title: LotexI18n.tr(lang, 'favoritesEmpty'),
+                    icon: Icons.favorite_border,
+                    buttonText: LotexI18n.tr(lang, 'browse'),
+                    onButtonPressed: () => context.go('/home'),
                   );
                 }
 

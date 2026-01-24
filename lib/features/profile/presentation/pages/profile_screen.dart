@@ -8,6 +8,8 @@ import 'package:lotex/core/widgets/lotex_app_bar.dart';
 import 'package:lotex/core/widgets/lotex_background.dart';
 import 'package:lotex/core/theme/lotex_ui_tokens.dart';
 import 'package:lotex/features/auth/domain/entities/user_entity.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:lotex/features/profile/presentation/pages/edit_profile_screen.dart';
 import 'package:lotex/core/i18n/language_provider.dart';
 import 'package:lotex/core/i18n/lotex_i18n.dart';
@@ -59,6 +61,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     if (shouldLogout == true) {
       await ref.read(authControllerProvider.notifier).signOut();
+      if (!mounted) return;
       // Тут не потрібно context.go('/login'), бо StreamBuilder сам оновить UI на _GuestView
     }
   }
@@ -154,7 +157,8 @@ class _UserView extends ConsumerWidget {
                             context,
                             MaterialPageRoute(builder: (_) => const EditProfileScreen()),
                           );
-                          if (updated == true && context.mounted) {
+                          if (!context.mounted) return;
+                          if (updated == true) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text(LotexI18n.tr(lang, 'profileUpdated'))),
                             );
@@ -238,6 +242,14 @@ class _CreatedTab extends StatelessWidget {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
+          final err = snapshot.error;
+          if (err is FirebaseException && err.code == 'permission-denied') {
+            return Text(
+              'У вас немає доступу до цієї інформації',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: LotexUiColors.slate400),
+            );
+          }
+
           return Text(
             LotexI18n.tr(lang, 'errorWithDetails')
                 .replaceFirst('{details}', humanError(snapshot.error ?? Exception('Unknown error'))),
@@ -705,10 +717,15 @@ class _ProfileAvatar extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
         child: photoUrl != null && photoUrl.isNotEmpty
-            ? Image.network(
-                photoUrl,
+            ? CachedNetworkImage(
+                imageUrl: photoUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) {
+                placeholder: (c, u) => Shimmer.fromColors(
+                  baseColor: LotexUiColors.slate800,
+                  highlightColor: Colors.black12,
+                  child: Container(color: LotexUiColors.slate800),
+                ),
+                errorWidget: (_, __, ___) {
                   return Container(
                     color: LotexUiColors.slate800,
                     alignment: Alignment.center,

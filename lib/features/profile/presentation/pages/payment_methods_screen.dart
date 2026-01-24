@@ -34,6 +34,7 @@ class PaymentMethodsScreen extends ConsumerWidget {
 
     if (ok != true) return;
     await ref.read(paymentMethodsControllerProvider.notifier).remove(paymentMethodId);
+    if (!context.mounted) return;
   }
 
   @override
@@ -43,13 +44,16 @@ class PaymentMethodsScreen extends ConsumerWidget {
     ref.listen(paymentMethodsControllerProvider, (prev, next) {
       next.whenOrNull(
         error: (e, _) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                LotexI18n.tr(lang, 'errorWithDetails').replaceFirst('{details}', humanError(e)),
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final messenger = ScaffoldMessenger.maybeOf(context);
+            messenger?.showSnackBar(
+              SnackBar(
+                content: Text(
+                  LotexI18n.tr(lang, 'errorWithDetails').replaceFirst('{details}', humanError(e)),
+                ),
               ),
-            ),
-          );
+            );
+          });
         },
       );
     });

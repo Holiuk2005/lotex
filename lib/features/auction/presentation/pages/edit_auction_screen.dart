@@ -77,6 +77,7 @@ class _EditAuctionScreenState extends ConsumerState<EditAuctionScreen> {
       initialTime: TimeOfDay.fromDateTime(_selectedDate ?? DateTime(now.year, now.month, now.day, 12, 0)),
     );
     if (time == null) return;
+    if (!mounted) return;
 
     setState(() {
       _selectedDate = DateTime(date.year, date.month, date.day, time.hour, time.minute);

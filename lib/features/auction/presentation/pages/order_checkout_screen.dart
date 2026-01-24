@@ -9,10 +9,12 @@ import 'package:lotex/core/widgets/lotex_background.dart';
 import 'package:lotex/features/auction/presentation/widgets/branch_picker_sheet.dart';
 import 'package:lotex/features/auction/presentation/widgets/city_search_sheet.dart';
 import 'package:lotex/features/auction/presentation/widgets/payment_breakdown_card.dart';
+import 'package:lotex/features/auction/presentation/widgets/shipping_provider_selector.dart';
 import 'package:lotex/core/utils/price_calculator.dart';
 import 'package:lotex/features/orders/domain/order_entity.dart';
 import 'package:lotex/services/logistics_service.dart';
 import 'package:lotex/core/i18n/lotex_i18n.dart';
+import 'package:lotex/features/auction/domain/entities/delivery_info.dart';
 
 class OrderCheckoutScreen extends StatefulWidget {
   final double itemPrice;
@@ -40,6 +42,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   City? _senderCity;
   City? _receiverCity;
   Branch? _receiverBranch;
+  DeliveryProvider _selectedProvider = DeliveryProvider.novaPoshta;
 
   LotexLanguage _langOf(BuildContext context) {
     return Localizations.localeOf(context).languageCode == 'uk'
@@ -129,6 +132,21 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
       _receiverBranch = picked;
       _branchController.text = picked.description;
     });
+  }
+
+  Future<void> _pickProvider() async {
+    final picked = await showModalBottomSheet<DeliveryProvider>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ShippingProviderSelector(
+        selected: _selectedProvider,
+        onSelected: (provider) => Navigator.of(context).pop(provider),
+      ),
+    );
+
+    if (picked == null || !mounted) return;
+    setState(() => _selectedProvider = picked);
   }
 
   Future<void> _calculateDelivery() async {
@@ -309,6 +327,49 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                 ),
                 child: Column(
                   children: [
+                    InkWell(
+                      onTap: _pickProvider,
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withAlpha((0.04 * 255).round())
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withAlpha((0.10 * 255).round())
+                                : Colors.black.withAlpha((0.06 * 255).round()),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.local_shipping_outlined, color: Colors.white.withAlpha((0.8 * 255).round())),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                _selectedProvider.displayName(
+                                  localeCode: Localizations.localeOf(context).languageCode,
+                                ),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              'Обрати',
+                              style: TextStyle(
+                                color: Colors.white.withAlpha((0.8 * 255).round()),
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: _cityController,
                       readOnly: true,

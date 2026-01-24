@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lotex/core/i18n/language_provider.dart';
 import 'package:lotex/core/i18n/lotex_i18n.dart';
 import 'package:lotex/core/utils/base64_image_cache.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:lotex/core/theme/lotex_ui_tokens.dart';
 import 'package:lotex/features/auction/domain/entities/auction_entity.dart';
 import 'package:lotex/features/favorites/presentation/providers/favorites_provider.dart';
@@ -76,16 +78,19 @@ class AuctionCard extends ConsumerWidget {
                       gaplessPlayback: true,
                     )
                   else if (auction.imageUrl.isNotEmpty)
-                    Image.network(
-                      auction.imageUrl,
+                    CachedNetworkImage(
+                      imageUrl: auction.imageUrl,
                       fit: BoxFit.cover,
-                      filterQuality: FilterQuality.low,
-                      errorBuilder: (_, __, ___) {
-                        return Container(
-                          color: isDark ? LotexUiColors.slate900 : LotexUiColors.lightBackground,
-                          child: Icon(Icons.image, size: 42, color: muted),
-                        );
-                      },
+                      fadeInDuration: const Duration(milliseconds: 200),
+                      placeholder: (context, url) => Shimmer.fromColors(
+                        baseColor: isDark ? LotexUiColors.slate900 : LotexUiColors.lightBackground,
+                        highlightColor: isDark ? Colors.black54 : Colors.white,
+                        child: Container(color: isDark ? LotexUiColors.slate900 : LotexUiColors.lightBackground),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        color: isDark ? LotexUiColors.slate900 : LotexUiColors.lightBackground,
+                        child: Icon(Icons.image, size: 42, color: muted),
+                      ),
                     )
                   else
                     Container(

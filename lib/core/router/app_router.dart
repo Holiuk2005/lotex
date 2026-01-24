@@ -142,6 +142,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                 );
               }
               if (snapshot.hasError) {
+                final err = snapshot.error;
+                if (err is FirebaseException && err.code == 'permission-denied') {
+                  return const Scaffold(
+                    body: Center(child: Text('У вас немає доступу до цього аукціону')),
+                  );
+                }
                 return Scaffold(
                   body: Center(child: Text('Error: ${snapshot.error}')),
                 );

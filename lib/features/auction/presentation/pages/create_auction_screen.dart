@@ -110,6 +110,8 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
     );
     if (time == null) return;
 
+    if (!mounted) return;
+
     setState(() {
       _selectedDate =
           DateTime(date.year, date.month, date.day, time.hour, time.minute);
@@ -124,6 +126,7 @@ class _CreateAuctionScreenState extends ConsumerState<CreateAuctionScreen> {
 
     if (image != null) {
       // Тут ми просто зберігаємо файл, не читаючи байти (швидше)
+      if (!mounted) return;
       setState(() {
         _pickedImage = image;
       });

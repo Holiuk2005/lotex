@@ -40,6 +40,7 @@ class NotificationsSheet extends ConsumerWidget {
                 TextButton(
                   onPressed: () async {
                     await repo.markAllRead(user.uid);
+                    if (!context.mounted) return;
                   },
                   child: const Text(
                     'Позначити все прочитаним',

@@ -9,6 +9,8 @@ import 'package:lotex/core/i18n/lotex_i18n.dart';
 import 'package:lotex/core/theme/lotex_ui_tokens.dart';
 import 'package:lotex/core/utils/human_error.dart';
 import 'package:lotex/core/widgets/lotex_app_bar.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:lotex/core/widgets/lotex_background.dart';
 import 'package:lotex/features/auction/domain/entities/auction_entity.dart';
 import 'package:lotex/features/auction/presentation/widgets/lotex_auction_grid_v2.dart';
@@ -196,11 +198,20 @@ class _Avatar extends StatelessWidget {
         ),
       ),
       padding: const EdgeInsets.all(1),
-      child: ClipOval(
+          child: ClipOval(
         child: Container(
           color: LotexUiColors.slate800,
           child: (url != null && url.isNotEmpty)
-              ? Image.network(url, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _Fallback(fallback: fallback))
+              ? CachedNetworkImage(
+                  imageUrl: url,
+                  fit: BoxFit.cover,
+                  placeholder: (c, u) => Shimmer.fromColors(
+                    baseColor: LotexUiColors.slate800,
+                    highlightColor: Colors.black12,
+                    child: Container(color: LotexUiColors.slate800),
+                  ),
+                  errorWidget: (c, u, e) => _Fallback(fallback: fallback),
+                )
               : _Fallback(fallback: fallback),
         ),
       ),

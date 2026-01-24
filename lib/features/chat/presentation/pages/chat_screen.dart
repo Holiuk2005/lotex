@@ -8,6 +8,7 @@ import 'chat_conversation_screen.dart';
 import 'package:lotex/core/i18n/language_provider.dart';
 import 'package:lotex/core/i18n/lotex_i18n.dart';
 import 'package:lotex/core/utils/human_error.dart';
+import 'package:lotex/core/widgets/empty_state_widget.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -236,11 +237,11 @@ class _DialogsTab extends ConsumerWidget {
                       : list.where((d) => d.title.toLowerCase().contains(q)).toList();
 
                   if (filtered.isEmpty) {
-                    return Center(
-                      child: Text(
-                        q.isEmpty ? LotexI18n.tr(lang, 'noDialogs') : 'No messages yet',
-                        style: const TextStyle(color: LotexUiColors.slate400, fontWeight: FontWeight.w600),
-                      ),
+                    return EmptyStateWidget(
+                      title: q.isEmpty ? LotexI18n.tr(lang, 'noDialogs') : 'No messages yet',
+                      icon: Icons.chat_bubble_outline,
+                      buttonText: LotexI18n.tr(lang, 'startConversation'),
+                      onButtonPressed: () {},
                     );
                   }
 

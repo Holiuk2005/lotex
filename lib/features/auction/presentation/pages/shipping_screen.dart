@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:lotex/core/constants/shipping_logos.dart';
 
 import 'package:lotex/core/i18n/language_provider.dart';
 import 'package:lotex/core/i18n/lotex_i18n.dart';
@@ -30,7 +31,7 @@ class ShippingScreen extends ConsumerStatefulWidget {
 class _ShippingScreenState extends ConsumerState<ShippingScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  DeliveryProvider _selectedProvider = DeliveryProvider.novaPoshtaBranch;
+  DeliveryProvider _selectedProvider = DeliveryProvider.novaPoshta;
 
   final _cityController = TextEditingController();
   final _departmentController = TextEditingController();
@@ -47,35 +48,19 @@ class _ShippingScreenState extends ConsumerState<ShippingScreen> {
   bool _isPickup() => _selectedProvider == DeliveryProvider.pickup;
 
   String _providerLabel(LotexLanguage lang, DeliveryProvider p) {
-    switch (p) {
-      case DeliveryProvider.novaPoshtaBranch:
-        return lang == LotexLanguage.en ? 'Nova Poshta (Branch)' : 'Нова Пошта (Відділення)';
-      case DeliveryProvider.novaPoshtaLocker:
-        return lang == LotexLanguage.en ? 'Nova Poshta (Locker)' : 'Нова Пошта (Поштомат)';
-      case DeliveryProvider.novaPoshtaCourier:
-        return lang == LotexLanguage.en ? 'Nova Poshta (Courier)' : "Нова Пошта (Кур'єр)";
-      case DeliveryProvider.ukrPoshta:
-        return lang == LotexLanguage.en ? 'Ukrposhta' : 'Укрпошта';
-      case DeliveryProvider.meestExpress:
-        return lang == LotexLanguage.en ? 'Meest Express' : 'Meest Express';
-      case DeliveryProvider.pickup:
-        return lang == LotexLanguage.en ? 'Pickup (meet seller)' : 'Самовивіз (зустріч з продавцем)';
+    final locale = lang == LotexLanguage.en ? 'en' : 'uk';
+    if (p == DeliveryProvider.pickup) {
+      return lang == LotexLanguage.en
+          ? 'Pickup (meet seller)'
+          : 'Самовивіз (зустріч з продавцем)';
     }
+    return p.displayName(localeCode: locale);
   }
 
   String? _providerLogoAsset(DeliveryProvider p) {
-    switch (p) {
-      case DeliveryProvider.novaPoshtaBranch:
-      case DeliveryProvider.novaPoshtaLocker:
-      case DeliveryProvider.novaPoshtaCourier:
-        return 'assets/logos/shipping/nova-poshta-logo.svg';
-      case DeliveryProvider.ukrPoshta:
-        return 'assets/logos/shipping/ukr-poshta-logo.svg';
-      case DeliveryProvider.meestExpress:
-        return 'assets/logos/shipping/meest-logo.svg';
-      case DeliveryProvider.pickup:
-        return null;
-    }
+    final fromMap = shippingLogos[p.name];
+    final asset = (fromMap ?? p.iconPath).trim();
+    return asset.isEmpty ? null : asset;
   }
 
   Widget _providerLeadingIcon(DeliveryProvider p) {
@@ -84,18 +69,27 @@ class _ShippingScreenState extends ConsumerState<ShippingScreen> {
       return const Icon(Icons.handshake_outlined, size: 18, color: LotexUiColors.slate400);
     }
 
-    return SvgPicture.asset(
+    if (asset.toLowerCase().endsWith('.svg')) {
+      return SvgPicture.asset(
+        asset,
+        width: 22,
+        height: 22,
+        fit: BoxFit.contain,
+        placeholderBuilder: (_) => const SizedBox(
+          width: 22,
+          height: 22,
+          child: Center(
+            child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+          ),
+        ),
+      );
+    }
+
+    return Image.asset(
       asset,
       width: 22,
       height: 22,
       fit: BoxFit.contain,
-      placeholderBuilder: (_) => const SizedBox(
-        width: 22,
-        height: 22,
-        child: Center(
-          child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
-        ),
-      ),
     );
   }
 
@@ -226,24 +220,23 @@ class _ShippingScreenState extends ConsumerState<ShippingScreen> {
                         children: [
                           _Section(
                             title: LotexI18n.tr(lang, 'shippingStep1'),
-                            child: Column(
-                              children: DeliveryProvider.values
-                                  .map(
-                                    (p) => _RadioTile(
-                                      title: _providerLabel(lang, p),
-                                      leading: _providerLeadingIcon(p),
-                                      value: p,
-                                      groupValue: _selectedProvider,
-                                      onChanged: (v) {
-                                        setState(() {
-                                          _selectedProvider = v;
-                                          _departmentController.clear();
-                                          _addressController.clear();
-                                        });
-                                      },
-                                    ),
-                                  )
-                                  .toList(growable: false),
+                            child: ShippingMethodSelector(
+                              providers: const [
+                                DeliveryProvider.novaPoshta,
+                                DeliveryProvider.ukrPoshta,
+                                DeliveryProvider.meestExpress,
+                                DeliveryProvider.pickup,
+                              ],
+                              selected: _selectedProvider,
+                              onChanged: (v) {
+                                setState(() {
+                                  _selectedProvider = v;
+                                  _departmentController.clear();
+                                  _addressController.clear();
+                                });
+                              },
+                              labelBuilder: (p) => _providerLabel(lang, p),
+                              iconBuilder: (p) => _providerLeadingIcon(p),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -376,6 +369,106 @@ class _Section extends StatelessWidget {
           child,
         ],
       ),
+    );
+  }
+}
+
+class ShippingMethodSelector extends StatelessWidget {
+  final List<DeliveryProvider> providers;
+  final DeliveryProvider selected;
+  final ValueChanged<DeliveryProvider> onChanged;
+  final String Function(DeliveryProvider) labelBuilder;
+  final Widget Function(DeliveryProvider) iconBuilder;
+
+  const ShippingMethodSelector({
+    super.key,
+    required this.providers,
+    required this.selected,
+    required this.onChanged,
+    required this.labelBuilder,
+    required this.iconBuilder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? Colors.white.withAlpha((0.06 * 255).round()) : Colors.white;
+    final border = isDark ? Colors.white.withAlpha((0.12 * 255).round()) : Colors.black.withAlpha((0.08 * 255).round());
+    final textColor = isDark ? LotexUiColors.darkTitle : LotexUiColors.lightTitle;
+    final mutedColor = isDark ? LotexUiColors.darkMuted : LotexUiColors.lightMuted;
+
+    return Column(
+      children: providers
+          .map(
+            (p) {
+              final isSelected = p == selected;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: InkWell(
+                  onTap: () => onChanged(p),
+                  borderRadius: BorderRadius.circular(18),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: surface,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: isSelected
+                            ? LotexUiColors.violet500.withAlpha((0.55 * 255).round())
+                            : border,
+                        width: isSelected ? 1.4 : 1,
+                      ),
+                      boxShadow: isSelected ? LotexUiShadows.glow : null,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withAlpha((0.08 * 255).round())
+                                : Colors.black.withAlpha((0.04 * 255).round()),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Center(child: iconBuilder(p)),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                labelBuilder(p),
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                      color: textColor,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                isSelected ? 'Обрано' : 'Натисніть для вибору',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: mutedColor,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          isSelected ? Icons.check_circle : Icons.radio_button_off,
+                          color: isSelected ? LotexUiColors.violet500 : mutedColor,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          )
+          .toList(growable: false),
     );
   }
 }

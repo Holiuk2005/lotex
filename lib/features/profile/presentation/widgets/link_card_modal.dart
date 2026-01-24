@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
+import '../../../../core/formatters/card_number_input_formatter.dart';
 
 import '../../../../core/i18n/language_provider.dart';
 import '../../../../core/i18n/lotex_i18n.dart';
@@ -25,7 +27,28 @@ Future<void> showLinkCardModal({
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _label(LotexI18n.tr(lang, 'cardNumber')),
-        _field(numberCtrl, hint: '0000 0000 0000 0000', keyboardType: TextInputType.number),
+        TextField(
+          controller: numberCtrl,
+          keyboardType: TextInputType.number,
+          maxLength: 19,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly, CardNumberFormatter()],
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          decoration: InputDecoration(
+            counterText: '',
+            filled: true,
+            fillColor: Colors.white.withAlpha((0.06 * 255).round()),
+            hintText: '0000 0000 0000 0000',
+            hintStyle: const TextStyle(color: LotexUiColors.slate500),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.white.withAlpha((0.08 * 255).round())),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: LotexUiColors.violet500),
+            ),
+          ),
+        ),
         const SizedBox(height: 12),
         _label(LotexI18n.tr(lang, 'cardHolder')),
         _field(holderCtrl, hint: 'NAME SURNAME'),

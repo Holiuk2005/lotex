@@ -1,6 +1,4 @@
-import 'dart:convert';
-
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 
 class City {
   final String ref;
@@ -47,53 +45,52 @@ class LogisticsService {
   static const String baseUrl = 'https://api.novaposhta.ua/v2.0/json/';
 
   /// Recommended: provide via `--dart-define=NOVA_POSHTA_API_KEY=...`.
-  static const String apiKey = String.fromEnvironment(
-    'NOVA_POSHTA_API_KEY',
-    defaultValue: 'PUT_YOUR_API_KEY_HERE',
-  );
+  static const String apiKey = String.fromEnvironment('NOVA_POSHTA_API_KEY', defaultValue: '');
 
-  final http.Client _client;
+  final Dio _dio;
+  final String _apiKey;
 
-  LogisticsService({http.Client? client}) : _client = client ?? http.Client();
+  LogisticsService({Dio? dio, String? apiKey})
+      : _dio = dio ?? Dio(
+          BaseOptions(
+            baseUrl: baseUrl,
+            connectTimeout: const Duration(seconds: 10),
+            receiveTimeout: const Duration(seconds: 15),
+            sendTimeout: const Duration(seconds: 10),
+            headers: const <String, dynamic>{
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          ),
+        ),
+        _apiKey = (apiKey ?? LogisticsService.apiKey).trim();
 
-  Future<List<City>> searchCity(String query) async {
+  /// TASK-2: Address/getSettlements
+  Future<List<City>> searchCities(String query) async {
     final q = query.trim();
     if (q.isEmpty) return const [];
 
     final jsonMap = await _post(
       modelName: 'Address',
-      calledMethod: 'searchSettlements',
+      calledMethod: 'getSettlements',
       methodProperties: <String, dynamic>{
-        'CityName': q,
+        'FindByString': q,
         'Limit': '20',
       },
     );
 
     final data = jsonMap['data'];
-    if (data is! List || data.isEmpty) return const [];
+    if (data is! List) return const [];
 
-    // searchSettlements response usually: data[0].Addresses: [{Present, DeliveryCity, ...}]
-    final first = data.first;
-    if (first is Map<String, dynamic>) {
-      final addresses = first['Addresses'];
-      if (addresses is List) {
-        return addresses
-            .whereType<Map>()
-            .map((e) => City.fromJson(e.cast<String, dynamic>()))
-            .where((c) => c.ref.isNotEmpty && c.name.isNotEmpty)
-            .toList();
-      }
-    }
-
-    // Fallback for getSettlements-like shapes: data: [{Ref, Description, ...}]
     return data
         .whereType<Map>()
         .map((e) => City.fromJson(e.cast<String, dynamic>()))
         .where((c) => c.ref.isNotEmpty && c.name.isNotEmpty)
-        .toList();
+        .toList(growable: false);
   }
 
-  Future<List<Branch>> getBranches(String cityRef) async {
+  /// TASK-2: Address/getWarehouses
+  Future<List<Branch>> getWarehouses(String cityRef) async {
     final ref = cityRef.trim();
     if (ref.isEmpty) return const [];
 
@@ -112,28 +109,31 @@ class LogisticsService {
         .whereType<Map>()
         .map((e) => Branch.fromJson(e.cast<String, dynamic>()))
         .where((b) => b.ref.isNotEmpty && b.description.isNotEmpty)
-        .toList();
+        .toList(growable: false);
   }
 
-  Future<double> calculateShippingCost({
+  /// TASK-2: InternetDocument/getPrice
+  Future<double> calculateShippingPrice({
     required String citySender,
-    required String cityReceiver,
+    required String cityRecipient,
     required double weight,
     required double cost,
   }) async {
     final sender = citySender.trim();
-    final receiver = cityReceiver.trim();
-    if (sender.isEmpty || receiver.isEmpty) return 0;
+    final recipient = cityRecipient.trim();
+    if (sender.isEmpty || recipient.isEmpty) return 0;
 
     final jsonMap = await _post(
       modelName: 'InternetDocument',
-      calledMethod: 'getDocumentPrice',
+      calledMethod: 'getPrice',
       methodProperties: <String, dynamic>{
         'CitySender': sender,
-        'CityRecipient': receiver,
+        'CityRecipient': recipient,
         'Weight': weight,
         'ServiceType': 'WarehouseWarehouse',
         'Cost': cost,
+        'CargoType': 'Cargo',
+        'SeatsAmount': '1',
       },
     );
 
@@ -143,12 +143,28 @@ class LogisticsService {
       if (first is Map) {
         final value = first['Cost'];
         if (value is num) return value.toDouble();
-        if (value is String) return double.tryParse(value) ?? 0;
+        if (value is String) return double.tryParse(value.trim().replaceAll(',', '.')) ?? 0;
       }
     }
 
     throw const NovaPoshtaException('Nova Poshta response did not contain Cost.');
   }
+
+  // Backwards-compatible API (used by existing UI widgets).
+  Future<List<City>> searchCity(String query) => searchCities(query);
+  Future<List<Branch>> getBranches(String cityRef) => getWarehouses(cityRef);
+  Future<double> calculateShippingCost({
+    required String citySender,
+    required String cityReceiver,
+    required double weight,
+    required double cost,
+  }) =>
+      calculateShippingPrice(
+        citySender: citySender,
+        cityRecipient: cityReceiver,
+        weight: weight,
+        cost: cost,
+      );
 
   /// Still mocked: a full `InternetDocument/save` request requires many fields
   /// (sender/recipient contact, addresses, date, cargo details, etc.).
@@ -166,49 +182,49 @@ class LogisticsService {
     required String calledMethod,
     required Map<String, dynamic> methodProperties,
   }) async {
-    if (apiKey == 'PUT_YOUR_API_KEY_HERE' || apiKey.trim().isEmpty) {
+    if (_apiKey.isEmpty) {
       throw const NovaPoshtaException(
         'Nova Poshta API key is missing. Provide it via --dart-define=NOVA_POSHTA_API_KEY=...'
       );
     }
 
     final body = <String, dynamic>{
-      'apiKey': apiKey,
+      'apiKey': _apiKey,
       'modelName': modelName,
       'calledMethod': calledMethod,
       'methodProperties': methodProperties,
     };
 
-    final response = await _client.post(
-      Uri.parse(baseUrl),
-      headers: const <String, String>{
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(body),
-    );
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '',
+        data: body,
+        options: Options(responseType: ResponseType.json),
+      );
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw NovaPoshtaException('HTTP ${response.statusCode}: ${response.body}');
-    }
-
-    final decoded = jsonDecode(response.body);
-    if (decoded is! Map<String, dynamic>) {
-      throw const NovaPoshtaException('Unexpected Nova Poshta response format.');
-    }
-
-    final success = decoded['success'];
-    if (success == false) {
-      final errors = decoded['errors'];
-      if (errors is List && errors.isNotEmpty) {
-        throw NovaPoshtaException(errors.join('\n'));
+      final decoded = response.data;
+      if (decoded == null) {
+        throw const NovaPoshtaException('Unexpected Nova Poshta response format.');
       }
-      final warnings = decoded['warnings'];
-      if (warnings is List && warnings.isNotEmpty) {
-        throw NovaPoshtaException(warnings.join('\n'));
-      }
-      throw const NovaPoshtaException('Nova Poshta request failed.');
-    }
 
-    return decoded;
+      final success = decoded['success'];
+      if (success == false) {
+        final errors = decoded['errors'];
+        if (errors is List && errors.isNotEmpty) {
+          throw NovaPoshtaException(errors.join('\n'));
+        }
+        final warnings = decoded['warnings'];
+        if (warnings is List && warnings.isNotEmpty) {
+          throw NovaPoshtaException(warnings.join('\n'));
+        }
+        throw const NovaPoshtaException('Nova Poshta request failed.');
+      }
+
+      return decoded;
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final bodyText = e.response?.data;
+      throw NovaPoshtaException('Nova Poshta HTTP ${status ?? '-'}: ${bodyText ?? e.message}');
+    }
   }
 }

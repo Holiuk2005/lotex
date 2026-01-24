@@ -30,6 +30,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+      if (!mounted) return;
       // Navigation is handled centrally by GoRouter redirect (auth -> /home)
       // to avoid double-navigation and deactivated-context issues.
     } catch (e) {

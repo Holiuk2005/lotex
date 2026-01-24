@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import 'dart:ui';
 import 'dart:typed_data';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,11 +77,16 @@ class _LotexAuctionCardV2State extends ConsumerState<LotexAuctionCardV2> {
 
     final Widget imageWidget;
     if (auction.imageUrl.trim().isNotEmpty) {
-      imageWidget = Image.network(
-        auction.imageUrl,
+      imageWidget = CachedNetworkImage(
+        imageUrl: auction.imageUrl,
         fit: BoxFit.cover,
-        filterQuality: FilterQuality.low,
-        errorBuilder: (_, __, ___) => _fallbackImage(),
+        fadeInDuration: const Duration(milliseconds: 200),
+        placeholder: (context, url) => Shimmer.fromColors(
+          baseColor: LotexUiColors.slate900,
+          highlightColor: Colors.black12,
+          child: Container(color: LotexUiColors.slate900),
+        ),
+        errorWidget: (context, url, error) => _fallbackImage(),
       );
     } else if (base64Bytes != null) {
       imageWidget = Image.memory(

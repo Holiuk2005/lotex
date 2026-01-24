@@ -1,10 +1,50 @@
 enum DeliveryProvider {
+  novaPoshta,
   novaPoshtaBranch,
   novaPoshtaCourier,
   novaPoshtaLocker,
   ukrPoshta,
   meestExpress,
   pickup,
+}
+
+extension DeliveryProviderUiX on DeliveryProvider {
+  String get assetPath {
+    switch (this) {
+      case DeliveryProvider.novaPoshta:
+      case DeliveryProvider.novaPoshtaBranch:
+      case DeliveryProvider.novaPoshtaCourier:
+      case DeliveryProvider.novaPoshtaLocker:
+        return 'assets/logos/shipping/nova_poshta.svg';
+      case DeliveryProvider.ukrPoshta:
+        return 'assets/logos/shipping/ukrposhta.svg';
+      case DeliveryProvider.meestExpress:
+        return 'assets/logos/shipping/meest.svg';
+      case DeliveryProvider.pickup:
+        return '';
+    }
+  }
+
+  String get iconPath => assetPath;
+
+  String displayName({String localeCode = 'uk'}) {
+    final isUk = localeCode.toLowerCase().startsWith('uk');
+    switch (this) {
+      case DeliveryProvider.novaPoshta:
+      case DeliveryProvider.novaPoshtaBranch:
+        return isUk ? 'Нова Пошта' : 'Nova Poshta';
+      case DeliveryProvider.novaPoshtaCourier:
+        return isUk ? "Нова Пошта (Кур'єр)" : 'Nova Poshta (Courier)';
+      case DeliveryProvider.novaPoshtaLocker:
+        return isUk ? 'Нова Пошта (Поштомат)' : 'Nova Poshta (Locker)';
+      case DeliveryProvider.ukrPoshta:
+        return isUk ? 'Укрпошта' : 'Ukrposhta';
+      case DeliveryProvider.meestExpress:
+        return isUk ? 'Meest Express' : 'Meest Express';
+      case DeliveryProvider.pickup:
+        return isUk ? 'Самовивіз' : 'Pickup';
+    }
+  }
 }
 
 enum PaymentMethod {

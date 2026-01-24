@@ -38,12 +38,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final password = _passwordController.text.trim();
     final controller = ref.read(authControllerProvider.notifier);
 
-    try {
+      try {
       if (isSigningUp) {
         await controller.signUp(email: email, password: password);
       } else {
         await controller.signIn(email: email, password: password);
       }
+      if (!mounted) return;
       // Navigation is handled centrally by GoRouter redirect (auth -> /home)
       // to avoid double-navigation and deactivated-context issues.
     } catch (e) {
@@ -298,6 +299,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   onTap: () async {
                                     try {
                                       await controller.signInWithApple();
+                                      if (!mounted) return;
                                     } catch (e) {
                                       if (!mounted) return;
                                       WidgetsBinding.instance

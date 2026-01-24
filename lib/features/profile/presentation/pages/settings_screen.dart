@@ -96,9 +96,8 @@ UI/UX дизайн: Holiuk Denys
 
     if (shouldLogout == true) {
       await ref.read(authControllerProvider.notifier).signOut();
-      if (context.mounted) {
-        Navigator.of(context).pop();
-      }
+      if (!context.mounted) return;
+      Navigator.of(context).pop();
     }
   }
 
@@ -169,15 +168,13 @@ UI/UX дизайн: Holiuk Denys
                     final user = FirebaseAuth.instance.currentUser;
                     if (user != null && !user.emailVerified) {
                       await user.sendEmailVerification();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(LotexI18n.tr(lang, 'codeSent'))),
-                        );
-                      }
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(LotexI18n.tr(lang, 'codeSent'))),
+                      );
                     }
-                    if (context.mounted) {
-                      await showVerificationModal(context: context, ref: ref, isPhone: false);
-                    }
+                    if (!context.mounted) return;
+                    await showVerificationModal(context: context, ref: ref, isPhone: false);
                   },
                 ),
                 if (showLogout) ...[

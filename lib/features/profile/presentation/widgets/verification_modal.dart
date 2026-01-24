@@ -28,7 +28,9 @@ Future<void> showVerificationModal({
               height: 48,
               child: OutlinedButton(
                 onPressed: () {
-                  setState(() => sent = true);
+                  try {
+                    setState(() => sent = true);
+                  } catch (_) {}
                   final messenger = ScaffoldMessenger.maybeOf(rootContext);
                   messenger?.showSnackBar(
                     SnackBar(content: Text(LotexI18n.tr(lang, 'codeSent'))),
@@ -76,7 +78,9 @@ Future<void> showVerificationModal({
                 ),
                 child: TextButton(
                   onPressed: () {
-                    Navigator.of(context).maybePop();
+                    try {
+                      Navigator.of(context).maybePop();
+                    } catch (_) {}
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       final messenger = ScaffoldMessenger.maybeOf(rootContext);
                       messenger?.showSnackBar(

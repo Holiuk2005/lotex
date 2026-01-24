@@ -12,6 +12,8 @@ import 'package:lotex/core/i18n/lotex_i18n.dart';
 import 'package:lotex/core/utils/human_error.dart';
 import 'package:lotex/core/utils/base64_image_cache.dart';
 import 'package:lotex/core/theme/lotex_ui_tokens.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:lotex/core/widgets/app_input.dart';
 import 'package:lotex/core/widgets/lotex_background.dart';
 import 'package:lotex/features/auth/presentation/providers/auth_state_provider.dart';
@@ -742,14 +744,19 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(999),
-                              child: Container(
+                                child: Container(
                                 color: LotexUiColors.slate800,
                                 alignment: Alignment.center,
                                 child: (photoURL != null && photoURL.isNotEmpty)
-                                    ? Image.network(
-                                        photoURL,
+                                    ? CachedNetworkImage(
+                                        imageUrl: photoURL,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) => const Icon(
+                                        placeholder: (c, u) => Shimmer.fromColors(
+                                          baseColor: LotexUiColors.slate800,
+                                          highlightColor: Colors.black12,
+                                          child: Container(color: LotexUiColors.slate800),
+                                        ),
+                                        errorWidget: (c, u, e) => const Icon(
                                           Icons.person,
                                           size: 18,
                                           color: LotexUiColors.slate400,

@@ -59,11 +59,40 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (picked != null) {
       final bytes = await picked.readAsBytes();
+      if (!mounted) return;
       setState(() {
         _imageFile = picked;
         _imageBytes = bytes;
       });
     }
+  }
+
+  Future<String> uploadAvatar(XFile file) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('Користувач не авторизований');
+
+    final bytes = await file.readAsBytes();
+    if (!mounted) throw Exception('widget disposed');
+
+    final ref = FirebaseStorage.instance.ref().child('user_avatars/${user.uid}.jpg');
+    final uploadTask = await ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+    if (!mounted) throw Exception('widget disposed');
+
+    final url = await uploadTask.ref.getDownloadURL();
+    if (!mounted) throw Exception('widget disposed');
+
+    // Update Firebase Auth photoURL
+    await user.updatePhotoURL(url);
+    if (!mounted) throw Exception('widget disposed');
+
+    // Update Firestore users doc with photoUrl
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+      'photoUrl': url,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    if (!mounted) throw Exception('widget disposed');
+
+    return url;
   }
 
   Future<void> _save() async {
@@ -74,16 +103,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
       String? photoUrl = user.photoURL;
       if (_imageFile != null) {
-        final bytes = await _imageFile!.readAsBytes();
-        final ref = FirebaseStorage.instance.ref().child('avatars/${user.uid}_${DateTime.now().millisecondsSinceEpoch}_${_imageFile!.name}');
-        final uploadTask = await ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
-        photoUrl = await uploadTask.ref.getDownloadURL();
-        await user.updatePhotoURL(photoUrl);
+        try {
+          // show sub-spinner by keeping _saving true
+          photoUrl = await uploadAvatar(_imageFile!);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Аватар збережено')));
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Помилка при завантаженні аватара: ${humanError(e)}')));
+          // proceed — avatar failed but other profile fields may still be saved
+        }
       }
 
       final newName = _nameController.text.trim();
       if (newName.isNotEmpty && newName != user.displayName) {
         await user.updateDisplayName(newName);
+        if (!mounted) return;
       }
 
       // update Firestore users doc
@@ -91,6 +126,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         'phone': _phoneController.text.trim(),
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+      if (!mounted) return;
 
       // update public profile doc
       await FirebaseFirestore.instance.collection('public_profiles').doc(user.uid).set({
@@ -98,11 +134,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         'photoURL': photoUrl,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+      if (!mounted) return;
 
       // Ensure FirebaseAuth emits updated user
       await user.reload();
+      if (!mounted) return;
 
-      if (mounted) Navigator.pop(context, true);
+      Navigator.pop(context, true);
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Помилка: ${humanError(e)}')));
     } finally {
