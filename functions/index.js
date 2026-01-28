@@ -298,9 +298,21 @@ exports.createOrderPayment = onCall(
     }
 
     // 3) Calculate shipping via Nova Poshta (server-side)
-    const npKey = NOVA_POSHTA_API_KEY.value();
+    // Read Nova Poshta API key from Firebase Secret when running in Cloud Functions.
+    // For local development you can set the environment variable
+    // `NOVA_POSHTA_API_KEY` (do NOT commit it to the repo).
+    let npKey = '';
+    try {
+      npKey = NOVA_POSHTA_API_KEY.value();
+    } catch (e) {
+      // If secrets are not configured in the environment (e.g., local dev),
+      // fall back to process.env. This allows local testing without hardcoding
+      // a key into source control. Ensure you set the env var in your shell.
+      npKey = process.env.NOVA_POSHTA_API_KEY || '';
+    }
+
     if (!npKey) {
-      throw new HttpsError('failed-precondition', 'NOVA_POSHTA_API_KEY is not configured.');
+      throw new HttpsError('failed-precondition', 'NOVA_POSHTA_API_KEY is not configured. Provide it via Firebase Secret or set process.env.NOVA_POSHTA_API_KEY for local testing.');
     }
 
     const { weightKG } = pickAuctionDimensions(auction);

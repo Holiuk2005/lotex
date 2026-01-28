@@ -150,6 +150,33 @@ class LogisticsService {
     throw const NovaPoshtaException('Nova Poshta response did not contain Cost.');
   }
 
+  /// Returns a map with raw NP response for getPrice, including Cost and
+  /// optional delivery-related fields if present. This exposes more data for
+  /// the UI (e.g., estimated delivery date) while keeping
+  /// `calculateShippingPrice` backwards-compatible.
+  Future<Map<String, dynamic>> getDocumentPrice({
+    required String citySender,
+    required String cityRecipient,
+    required double weight,
+    required double cost,
+  }) async {
+    final jsonMap = await _post(
+      modelName: 'InternetDocument',
+      calledMethod: 'getPrice',
+      methodProperties: <String, dynamic>{
+        'CitySender': citySender,
+        'CityRecipient': cityRecipient,
+        'Weight': weight,
+        'ServiceType': 'WarehouseWarehouse',
+        'Cost': cost,
+        'CargoType': 'Cargo',
+        'SeatsAmount': '1',
+      },
+    );
+
+    return jsonMap;
+  }
+
   // Backwards-compatible API (used by existing UI widgets).
   Future<List<City>> searchCity(String query) => searchCities(query);
   Future<List<Branch>> getBranches(String cityRef) => getWarehouses(cityRef);

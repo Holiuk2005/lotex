@@ -37,6 +37,7 @@ class AuctionDetailsScreen extends ConsumerStatefulWidget {
 class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
   bool _isBidSheetOpen = false;
   bool _didAutoOpenShipping = false;
+  bool _bidInitiatedHere = false;
   int _thumbIndex = 0;
   ProviderSubscription<AsyncValue<void>>? _placeBidSub;
 
@@ -51,7 +52,7 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
         final lang = ref.read(lotexLanguageProvider);
         next.when(
           data: (_) {
-            if (prev?.isLoading ?? false) {
+            if ((prev?.isLoading ?? false) && _bidInitiatedHere) {
               if (!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(LotexI18n.tr(lang, 'bidAccepted'))),
@@ -65,6 +66,7 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (!mounted) return;
                 _openChatWithSeller();
+                _bidInitiatedHere = false;
               });
             }
           },
@@ -81,6 +83,7 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
                 ),
               ),
             );
+            _bidInitiatedHere = false;
           },
           loading: () {},
         );
@@ -99,6 +102,7 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
   @override
   void dispose() {
     _placeBidSub?.close();
+    _bidInitiatedHere = false;
     super.dispose();
   }
 
@@ -366,7 +370,10 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
     final lang = ref.read(lotexLanguageProvider);
     final formKey = GlobalKey<FormState>();
 
-    setState(() => _isBidSheetOpen = true);
+    setState(() {
+      _isBidSheetOpen = true;
+      _bidInitiatedHere = true;
+    });
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -491,13 +498,14 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
     final isWinner = user != null && hasWinner && user.uid == auction.winnerId;
     final needsShipping = isWinner && auction.deliveryInfo == null && (isFinished || status == 'sold');
 
-    // Auto-open shipping once when the user becomes the winner.
+    // Do not auto-open the shipping form on mount. Showing shipping should be
+    // an explicit user action (e.g., after buyout confirmation or pressing a
+    // dedicated button). Keep the flag to avoid repeated attempts from other
+    // lifecycle events, but do not navigate automatically here.
     if (needsShipping && !_didAutoOpenShipping) {
       _didAutoOpenShipping = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        context.push('/shipping/${auction.id}');
-      });
+      // Intentionally not navigating. UI will render a prompt/button so the
+      // user can proceed to shipping when they choose to.
     }
 
     return Scaffold(
