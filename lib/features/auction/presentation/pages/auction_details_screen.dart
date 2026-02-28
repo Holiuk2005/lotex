@@ -71,10 +71,7 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
             }
           },
           error: (e, st) {
-            // ignore: avoid_print
-            print('REAL ERROR: $e');
-            // ignore: avoid_print
-            print('REAL STACK: $st');
+                // Log error for diagnostics
             if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

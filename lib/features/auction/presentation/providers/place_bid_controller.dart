@@ -51,12 +51,6 @@ class PlaceBidController extends AutoDisposeAsyncNotifier<void> {
       );
       state = const AsyncValue.data(null);
     } catch (e, st) {
-      // Help debug cases where UI only shows a generic/"Unknown" message.
-      // This prints the real exception to the debug console.
-      // ignore: avoid_print
-      print('REAL ERROR: $e');
-      // ignore: avoid_print
-      print('REAL STACK: $st');
       state = AsyncValue.error(e, st);
     }
   }

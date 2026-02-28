@@ -6,6 +6,7 @@ import 'package:lotex/features/auth/data/firebase_auth_datasource.dart';
 import 'package:lotex/features/auth/domain/auth_repository.dart';
 import 'package:lotex/features/auth/domain/entities/user_entity.dart';
 import 'package:lotex/services/secure_storage_service.dart';
+import '../../../core/errors/failure_mapper.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final FirebaseAuthDatasource datasource;
@@ -34,26 +35,56 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<UserEntity> signUp({required String email, required String password}) async {
-    final cred = await datasource.signUp(email, password);
-    final user = cred.user;
-    if (user == null) throw Exception('Sign up failed');
-    await _saveUserData(uid: user.uid, email: email);
-    return UserEntity.fromFirebaseUser(user);
+    try {
+      final cred = await datasource.signUp(email, password);
+      final user = cred.user;
+      if (user == null) throw Exception('Sign up failed');
+      await _saveUserData(uid: user.uid, email: email);
+      return UserEntity.fromFirebaseUser(user);
+    } catch (e) {
+      throw FailureMapper.from(e);
+    }
   }
 
   @override
   Future<UserEntity> signIn({required String email, required String password}) async {
-    final cred = await datasource.signIn(email, password);
-    final user = cred.user;
-    if (user == null) throw Exception('Sign in failed');
-    return UserEntity.fromFirebaseUser(user);
+    try {
+      final cred = await datasource.signIn(email, password);
+      final user = cred.user;
+      if (user == null) throw Exception('Sign in failed');
+      return UserEntity.fromFirebaseUser(user);
+    } catch (e) {
+      throw FailureMapper.from(e);
+    }
   }
 
   @override
   Future<UserEntity> signInWithGoogle() async {
     if (kIsWeb) {
-      final provider = GoogleAuthProvider();
-      final cred = await FirebaseAuth.instance.signInWithPopup(provider);
+      try {
+        final provider = GoogleAuthProvider();
+        final cred = await FirebaseAuth.instance.signInWithPopup(provider);
+        final user = cred.user;
+        if (user == null) throw Exception('Google sign in failed');
+        await _saveUserData(
+          uid: user.uid,
+          email: user.email ?? '',
+          name: user.displayName,
+          photoUrl: user.photoURL,
+        );
+        return UserEntity.fromFirebaseUser(user);
+      } catch (e) {
+        throw FailureMapper.from(e);
+      }
+    }
+
+    try {
+      await _ensureGoogleInitialized();
+
+      final googleUser = await GoogleSignIn.instance.authenticate();
+      final googleAuth = googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(idToken: googleAuth.idToken);
+      final cred = await datasource.signInWithCredential(credential);
       final user = cred.user;
       if (user == null) throw Exception('Google sign in failed');
       await _saveUserData(
@@ -63,23 +94,9 @@ class AuthRepositoryImpl implements AuthRepository {
         photoUrl: user.photoURL,
       );
       return UserEntity.fromFirebaseUser(user);
+    } catch (e) {
+      throw FailureMapper.from(e);
     }
-
-    await _ensureGoogleInitialized();
-
-    final googleUser = await GoogleSignIn.instance.authenticate();
-    final googleAuth = googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(idToken: googleAuth.idToken);
-    final cred = await datasource.signInWithCredential(credential);
-    final user = cred.user;
-    if (user == null) throw Exception('Google sign in failed');
-    await _saveUserData(
-      uid: user.uid,
-      email: user.email ?? '',
-      name: user.displayName,
-      photoUrl: user.photoURL,
-    );
-    return UserEntity.fromFirebaseUser(user);
   }
 
   @override

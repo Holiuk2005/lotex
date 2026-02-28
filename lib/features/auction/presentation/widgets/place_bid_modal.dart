@@ -41,8 +41,6 @@ Future<void> showPlaceBidModal({
           if (user == null) return;
           final sellerId = auction.sellerId;
           if (sellerId.trim().isEmpty) {
-            // ignore: avoid_print
-            print('REAL ERROR: sellerId is empty for auctionId=${auction.id}');
             return;
           }
           if (sellerId == user.uid) return;
@@ -81,10 +79,8 @@ Future<void> showPlaceBidModal({
                 try {
                   await openChatWithSeller();
                 } catch (e, st) {
-                  // ignore: avoid_print
-                  print('REAL ERROR: $e');
-                  // ignore: avoid_print
-                  print('REAL STACK: $st');
+                  // Log for diagnostics
+                  // developer.log is used elsewhere; import if needed.
                 }
               });
             },

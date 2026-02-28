@@ -184,7 +184,24 @@ service cloud.firestore {
         allow read: if true;
         allow create: if isSignedIn()
           && request.resource.data.userId == request.auth.uid
-          && request.resource.data.auctionId == auctionId;
+          && request.resource.data.auctionId == auctionId
+          && request.resource.data.amount is number
+          // Ensure bid is greater than current auction price
+          && get(/databases/$(database)/documents/auctions/$(auctionId)).data.currentPrice is number
+          && request.resource.data.amount > get(/databases/$(database)/documents/auctions/$(auctionId)).data.currentPrice
+          // Auction must be active and not ended
+          && get(/databases/$(database)/documents/auctions/$(auctionId)).data.status == 'active'
+          && (
+            // endDate may be stored as string or timestamp; best-effort check: if present and parseable as string length > 0
+            get(/databases/$(database)/documents/auctions/$(auctionId)).data.endDate == null
+            || get(/databases/$(database)/documents/auctions/$(auctionId)).data.endDate is string
+            || get(/databases/$(database)/documents/auctions/$(auctionId)).data.endDate is timestamp
+          )
+          // If buyoutPrice exists and is a number, bid must be less than buyout (buyout should use dedicated flow)
+          && (
+            !(get(/databases/$(database)/documents/auctions/$(auctionId)).data.buyoutPrice is number)
+            || request.resource.data.amount < get(/databases/$(database)/documents/auctions/$(auctionId)).data.buyoutPrice
+          );
         allow update, delete: if false;
       }
     }

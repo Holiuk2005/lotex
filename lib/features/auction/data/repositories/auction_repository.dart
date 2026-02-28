@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:async';
 import 'dart:developer' as developer;
+import '../../../core/errors/failure_mapper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -270,7 +271,7 @@ class AuctionRepository {
         mark('rollbackDelete');
         await docRef.delete().timeout(const Duration(seconds: 10));
       } catch (_) {}
-      throw Exception('Помилка створення лота на кроці "$stage": $e');
+      throw FailureMapper.from(e);
     }
   }
 
@@ -389,7 +390,8 @@ class AuctionRepository {
       return fallback;
     }
 
-    await _firestore.runTransaction((transaction) async {
+    try {
+      await _firestore.runTransaction((transaction) async {
       final snapshot = await transaction.get(auctionRef);
       final data = snapshot.data();
       if (data == null) {
@@ -467,7 +469,11 @@ class AuctionRepository {
 
       transaction.set(bidsRef.doc(), bidData);
       transaction.set(userBidsRef.doc(), bidData);
-    });
+      });
+    } catch (e) {
+      developer.log('placeBid error: $e');
+      throw FailureMapper.from(e);
+    }
   }
 
   Future<void> confirmShipping(String auctionId, DeliveryInfo info) async {
@@ -516,7 +522,8 @@ class AuctionRepository {
       return null;
     }
 
-    await _firestore.runTransaction((transaction) async {
+    try {
+      await _firestore.runTransaction((transaction) async {
       final snapshot = await transaction.get(auctionRef);
       final data = snapshot.data();
       if (data == null) {
@@ -594,7 +601,11 @@ class AuctionRepository {
         'type': 'buyout',
         'auctionId': auctionId,
       });
-    });
+      });
+    } catch (e) {
+      developer.log('buyoutAuction error: $e');
+      throw FailureMapper.from(e);
+    }
   }
 
   Future<void> deleteAuction({

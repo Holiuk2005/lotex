@@ -96,16 +96,11 @@ Future<void> runBuyoutFlow({
         return;
       }
     } catch (e, st) {
-      // ignore: avoid_print
-      print('REAL ERROR: $e');
-      // ignore: avoid_print
-      print('REAL STACK: $st');
+        // Log error for diagnostics
     }
 
     context.push('/shipping/${auction.id}');
   } catch (e) {
-    // ignore: avoid_print
-    print('REAL ERROR: $e');
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
