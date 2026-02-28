@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:lotex/services/logistics_service.dart';
 
 class ShippingSelector extends StatefulWidget {
@@ -200,7 +199,7 @@ class _ShippingSelectorState extends State<ShippingSelector> {
                     readOnly: true,
                   )
                 : DropdownButtonFormField<Branch>(
-                    value: _warehouses.firstWhere((b) => b.description == _warehouseCtrl.text, orElse: () => _warehouses.first),
+                    initialValue: _warehouses.firstWhere((b) => b.description == _warehouseCtrl.text, orElse: () => _warehouses.first),
                     items: _warehouses
                         .map((b) => DropdownMenuItem(value: b, child: Text(b.description)))
                         .toList(growable: false),
