@@ -1,0 +1,71 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    env:
+      # These will be populated from repository secrets below
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      NOVA_POSHTA_API_KEY: ${{ secrets.NOVA_POSHTA_API_KEY }}
+    services: {}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java (for Flutter)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+
+      - name: Install Firebase CLI
+        run: |
+          npm install -g firebase-tools
+
+      - name: Install project dependencies
+        run: flutter pub get
+
+      - name: Start Firebase emulators
+        run: |
+          # Start emulators in background and wait for them to be healthy
+          # Use the env secrets (already provided via repo secrets)
+          firebase emulators:start --only auth,firestore,storage,functions &
+          echo "Waiting for emulators to start..."
+          # Health-check: wait until emulator REST ports respond or timeout
+          timeout=60
+          waited=0
+          until curl -sS http://localhost:4000 || [ $waited -ge $timeout ]; do
+            sleep 1
+            waited=$((waited+1))
+            echo "waiting for emulators... $waited"
+          done
+          if [ $waited -ge $timeout ]; then
+            echo "Emulators did not start in time" >&2
+            exit 1
+          fi
+
+      - name: Run integration tests
+        env:
+          USE_FIREBASE_EMULATORS: 'true'
+        run: |
+          # Ensure seed data exists
+          flutter test test/seed_test.dart --dart-define=USE_FIREBASE_EMULATORS=true --concurrency=1
+          # Run integration tests
+          flutter test integration_test --dart-define=USE_FIREBASE_EMULATORS=true --concurrency=1
+
+      - name: Stop emulators
+        if: always()
+        run: |
+          # attempt to stop emulators gracefully
+          firebase emulators:stop || true

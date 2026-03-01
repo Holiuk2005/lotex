@@ -2,7 +2,7 @@
 import '../domain/auction_repository.dart';
 import '../domain/entities/auction_entity.dart';
 import 'firebase_auction_datasource.dart';
-import '../../../core/errors/failure_mapper.dart';
+import 'package:lotex/core/errors/failure_mapper.dart';
 
 import 'dart:developer' as developer;
 

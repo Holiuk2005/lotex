@@ -35,6 +35,7 @@ dependencies:
   flutter_svg: ^2.0.10+1
   uuid: ^4.3.3        # Генерація ID
   shared_preferences: ^2.2.3
+  js: ^0.6.5
   image_picker: ^1.1.2
   image: ^4.1.7
   sign_in_with_apple: ^7.0.1

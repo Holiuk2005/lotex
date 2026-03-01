@@ -354,22 +354,28 @@ exports.createOrderPayment = onCall(
       throw new HttpsError('failed-precondition', 'STRIPE_SECRET_KEY is not configured.');
     }
 
-    const stripe = require('stripe')(stripeKey);
-    const currency = 'uah';
-    const amountMinor = toMinorUnits(totalAmount, currency);
+    let paymentIntent;
+    try {
+      const stripe = require('stripe')(stripeKey);
+      const currency = 'uah';
+      const amountMinor = toMinorUnits(totalAmount, currency);
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountMinor,
-      currency,
-      metadata: {
-        auctionId,
-        buyerUid,
-        sellerId,
-        deliveryCityRef,
-        deliveryWarehouseRef,
-      },
-      automatic_payment_methods: { enabled: true },
-    });
+      paymentIntent = await stripe.paymentIntents.create({
+        amount: amountMinor,
+        currency,
+        metadata: {
+          auctionId,
+          buyerUid,
+          sellerId,
+          deliveryCityRef,
+          deliveryWarehouseRef,
+        },
+        automatic_payment_methods: { enabled: true },
+      });
+    } catch (e) {
+      console.error('Stripe error:', e);
+      throw new HttpsError('internal', 'Payment provider error.');
+    }
 
     // 7) Return pricing breakdown
     return {

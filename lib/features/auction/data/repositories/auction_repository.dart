@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:async';
 import 'dart:developer' as developer;
-import '../../../core/errors/failure_mapper.dart';
+import 'package:lotex/core/errors/failure_mapper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;

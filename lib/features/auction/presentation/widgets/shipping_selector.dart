@@ -49,19 +49,26 @@ class _ShippingSelectorState extends State<ShippingSelector> {
       _warehouses = [];
       _warehouseCtrl.text = '';
     });
+    bool shouldReturn = false;
     try {
       final list = await widget.logistics.getWarehouses(city);
-      if (!mounted) return;
-      setState(() => _warehouses = list);
+      if (!mounted) {
+        shouldReturn = true;
+      } else {
+        setState(() => _warehouses = list);
+      }
     } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _warehouses = [];
-      });
+      if (!mounted) {
+        shouldReturn = true;
+      } else {
+        setState(() => _warehouses = []);
+      }
     } finally {
-      if (!mounted) return;
-      setState(() => _loadingWarehouses = false);
+      if (mounted) {
+        setState(() => _loadingWarehouses = false);
+      }
     }
+    if (shouldReturn) return;
   }
 
   Future<void> _searchCitiesDebounced(String pattern) async {
@@ -81,17 +88,26 @@ class _ShippingSelectorState extends State<ShippingSelector> {
         _cityResults = [];
       });
 
+      bool shouldReturnSearch = false;
       try {
         final res = await widget.logistics.searchCities(q);
-        if (!mounted) return;
-        setState(() => _cityResults = res);
+        if (!mounted) {
+          shouldReturnSearch = true;
+        } else {
+          setState(() => _cityResults = res);
+        }
       } catch (e) {
-        if (!mounted) return;
-        setState(() => _cityResults = []);
+        if (!mounted) {
+          shouldReturnSearch = true;
+        } else {
+          setState(() => _cityResults = []);
+        }
       } finally {
-        if (!mounted) return;
-        setState(() => _loadingCities = false);
+        if (mounted) {
+          setState(() => _loadingCities = false);
+        }
       }
+      if (shouldReturnSearch) return;
     });
   }
 
@@ -103,9 +119,12 @@ class _ShippingSelectorState extends State<ShippingSelector> {
         break;
       }
     }
-    if (receiver == null && _cityResults.isNotEmpty) receiver = _cityResults.first;
+    if (receiver == null && _cityResults.isNotEmpty) {
+      receiver = _cityResults.first;
+    }
     if (receiver == null || _warehouses.isEmpty || widget.sellerCityRef == null) return;
-    final branch = _warehouses.firstWhere((b) => b.description == _warehouseCtrl.text, orElse: () => _warehouses.first);
+    // Branch selection not used directly here; keep lookup if needed later.
+    // final Branch branch = _warehouses.firstWhere((b) => b.description == _warehouseCtrl.text, orElse: () => _warehouses.first);
 
     setState(() {
       _calculatingPrice = true;
@@ -114,6 +133,7 @@ class _ShippingSelectorState extends State<ShippingSelector> {
       _estimatedDelivery = null;
     });
 
+    bool shouldReturnCalc = false;
     try {
       final doc = await widget.logistics.getDocumentPrice(
         citySender: widget.sellerCityRef!,
@@ -128,7 +148,9 @@ class _ShippingSelectorState extends State<ShippingSelector> {
         final v = first['Cost'];
         if (v is num) {
           price = v.toDouble();
-        } else if (v is String) price = double.tryParse(v.replaceAll(',', '.')) ?? 0;
+        } else if (v is String) {
+          price = double.tryParse(v.replaceAll(',', '.')) ?? 0;
+        }
         // Some NP responses may include delivery date fields; try to parse.
         if (first['DeliveryDate'] is String) {
           try {
@@ -139,19 +161,27 @@ class _ShippingSelectorState extends State<ShippingSelector> {
         }
       }
 
-      if (!mounted) return;
-      setState(() {
-        _calculatedPrice = price;
-      });
+      if (!mounted) {
+        shouldReturnCalc = true;
+      } else {
+        setState(() {
+          _calculatedPrice = price;
+        });
+      }
     } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _priceError = e.toString();
-      });
+      if (!mounted) {
+        shouldReturnCalc = true;
+      } else {
+        setState(() {
+          _priceError = e.toString();
+        });
+      }
     } finally {
-      if (!mounted) return;
-      setState(() => _calculatingPrice = false);
+        if (mounted) {
+          setState(() => _calculatingPrice = false);
+        }
     }
+    if (shouldReturnCalc) return;
   }
 
   @override

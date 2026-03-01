@@ -75,14 +75,13 @@ Future<void> showPlaceBidModal({
                 Navigator.of(modalContext).pop();
               }
               // Navigate after the modal is closed.
-              Future.microtask(() async {
-                try {
-                  await openChatWithSeller();
-                } catch (e, st) {
-                  // Log for diagnostics
-                  // developer.log is used elsewhere; import if needed.
-                }
-              });
+                Future.microtask(() async {
+                  try {
+                    await openChatWithSeller();
+                  } catch (e) {
+                    // Log for diagnostics if needed
+                  }
+                });
             },
           );
         });

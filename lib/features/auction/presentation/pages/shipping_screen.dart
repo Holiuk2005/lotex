@@ -473,6 +473,9 @@ class ShippingMethodSelector extends StatelessWidget {
   }
 }
 
+// The `_RadioTile` helper is currently unused; keep it commented out
+// in case it's needed later. Removing it avoids an unused_element warning.
+/*
 class _RadioTile<T> extends StatelessWidget {
   final String title;
   final Widget? leading;
@@ -556,3 +559,4 @@ class _RadioTile<T> extends StatelessWidget {
     );
   }
 }
+*/

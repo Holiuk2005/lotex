@@ -6,7 +6,7 @@ import 'package:lotex/features/auth/data/firebase_auth_datasource.dart';
 import 'package:lotex/features/auth/domain/auth_repository.dart';
 import 'package:lotex/features/auth/domain/entities/user_entity.dart';
 import 'package:lotex/services/secure_storage_service.dart';
-import '../../../core/errors/failure_mapper.dart';
+import 'package:lotex/core/errors/failure_mapper.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final FirebaseAuthDatasource datasource;
@@ -101,7 +101,10 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<UserEntity> signInWithApple() async {
-    throw UnimplementedError('Apple sign-in is not implemented in this repository');
+    // Apple sign-in is not implemented for current platforms in this repo.
+    // Return a mapped Failure so UI can display a localized message instead
+    // of crashing on UnimplementedError.
+    throw FailureMapper.from(Exception('Apple sign-in is not implemented on this platform.'));
   }
 
   @override

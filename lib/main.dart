@@ -10,7 +10,10 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart'
   show TargetPlatform, defaultTargetPlatform, kIsWeb;
-import 'dart:js' as js;
+// Conditional import: web uses `web_js_interop.dart` (dart:js_interop),
+// non-web uses a small stub that returns `null` for `telegramWebApp`.
+import 'src/web_js_interop_stub.dart'
+    if (dart.library.js) 'src/web_js_interop.dart' as web;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lotex/core/router/app_router.dart';
@@ -89,30 +92,23 @@ class _LotexBootstrapState extends State<LotexBootstrap> {
       await _connectToFirebaseEmulators();
     }
 
-    // Telegram Web App: detect and adapt theme if opened inside Telegram (web only).
-    if (kIsWeb) {
-      try {
-        final telegram = js.context['Telegram'];
-        if (telegram != null && telegram['WebApp'] != null) {
-          final webApp = telegram['WebApp'];
-          final colorScheme = webApp['colorScheme'];
-          if (colorScheme == 'light') {
-            ThemeManager.mode.value = ThemeMode.light;
-          } else if (colorScheme == 'dark') {
-            ThemeManager.mode.value = ThemeMode.dark;
-          }
-          // Notify: call ready if available.
-          try {
-            final ready = webApp['ready'];
-            if (ready is Function) {
-              webApp.callMethod('ready');
-            }
-          } catch (_) {}
-          developer.log('Telegram WebApp detected, colorScheme=$colorScheme', name: 'Lotex');
+    // Web-only: use JS interop accessor (returns null on non-web platforms).
+    try {
+      final webApp = web.telegramWebApp;
+      if (webApp != null) {
+        final colorScheme = webApp.colorScheme;
+        if (colorScheme == 'light') {
+          ThemeManager.mode.value = ThemeMode.light;
+        } else if (colorScheme == 'dark') {
+          ThemeManager.mode.value = ThemeMode.dark;
         }
-      } catch (e) {
-        developer.log('Telegram detection failed: $e', name: 'Lotex');
+        try {
+          webApp.setThemeParams(null);
+        } catch (_) {}
+        developer.log('Telegram WebApp detected, colorScheme=$colorScheme', name: 'Lotex');
       }
+    } catch (e) {
+      developer.log('Telegram detection failed: $e', name: 'Lotex');
     }
 
     // Make the mobile loading moment visible and consistent.

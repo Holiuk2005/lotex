@@ -8,7 +8,6 @@ class CardNumberFormatter extends TextInputFormatter {
 
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
-    final oldText = oldValue.text;
     final newText = newValue.text;
 
     // Keep only digits
@@ -24,7 +23,7 @@ class CardNumberFormatter extends TextInputFormatter {
     final formatted = buffer.toString();
 
     // Calculate new cursor position
-    int selectionIndex = newValue.selection.end;
+    final int selectionIndex = newValue.selection.end;
     // Count digits to the left of the cursor in the new value
     final digitsBeforeCursor = newText.substring(0, selectionIndex).replaceAll(RegExp(r'\D'), '').length;
     // Map digit index to formatted index

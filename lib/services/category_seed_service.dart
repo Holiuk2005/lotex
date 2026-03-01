@@ -1,5 +1,6 @@
+import 'dart:developer' as developer;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
+// 'foundation' not needed here; removed to satisfy analyzer
 
 class CategoryModel {
   final String id;
@@ -237,10 +238,10 @@ class CategorySeedService {
       }
 
       await batch.commit();
-      debugPrint('✅ Seeded categories: ${categories.length}');
-    } catch (e, st) {
-      debugPrint('❌ Failed to seed categories: $e');
-      debugPrint('$st');
+      // Log seeding result for diagnostics
+      developer.log('✅ Seeded categories: ${categories.length}');
+    } catch (e) {
+      developer.log('❌ Failed to seed categories: $e');
       rethrow;
     }
   }

@@ -1,5 +1,7 @@
 
+import 'dart:developer' as developer;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:lotex/core/errors/failure_mapper.dart';
 import '../domain/entities/auction_entity.dart';
 
 class FirebaseAuctionDatasource {
@@ -7,11 +9,16 @@ class FirebaseAuctionDatasource {
   FirebaseAuctionDatasource(this.firestore);
 
   Future<List<AuctionEntity>> getAuctions() async {
-    final snapshot = await firestore
-        .collection('auctions')
-        .orderBy('createdAt', descending: true)
-        .get();
-    return snapshot.docs.map((doc) => AuctionEntity.fromDocument(doc)).toList();
+    try {
+      final snapshot = await firestore
+          .collection('auctions')
+          .orderBy('createdAt', descending: true)
+          .get();
+      return snapshot.docs.map((doc) => AuctionEntity.fromDocument(doc)).toList();
+    } catch (e) {
+      developer.log('FirebaseAuctionDatasource.getAuctions error: $e');
+      throw FailureMapper.from(e);
+    }
   }
 
   Future<void> createAuction({
@@ -21,17 +28,22 @@ class FirebaseAuctionDatasource {
     required DateTime endDate,
     required String imageBase64,
   }) async {
-    final auction = AuctionEntity(
-      id: '',
-      title: title,
-      description: description,
-      imageUrl: '',
-      imageBase64: imageBase64,
-      startPrice: startPrice,
-      currentPrice: startPrice,
-      endDate: endDate,
-      sellerId: '',
-    );
-    await firestore.collection('auctions').add(auction.toDocument());
+    try {
+      final auction = AuctionEntity(
+        id: '',
+        title: title,
+        description: description,
+        imageUrl: '',
+        imageBase64: imageBase64,
+        startPrice: startPrice,
+        currentPrice: startPrice,
+        endDate: endDate,
+        sellerId: '',
+      );
+      await firestore.collection('auctions').add(auction.toDocument());
+    } catch (e) {
+      developer.log('FirebaseAuctionDatasource.createAuction error: $e');
+      throw FailureMapper.from(e);
+    }
   }
 }

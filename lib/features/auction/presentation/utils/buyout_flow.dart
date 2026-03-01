@@ -95,8 +95,10 @@ Future<void> runBuyoutFlow({
         );
         return;
       }
-    } catch (e, st) {
-        // Log error for diagnostics
+    } catch (e) {
+      // Log error for diagnostics
+      // ignore: avoid_print
+      // developer.log could be used here if desired.
     }
 
     context.push('/shipping/${auction.id}');

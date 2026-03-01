@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:developer' as developer;
+import 'package:lotex/core/errors/failure_mapper.dart';
 
 class FirebaseAuthDatasource {
   final FirebaseAuth _auth;
@@ -11,15 +13,30 @@ class FirebaseAuthDatasource {
   Stream<User?> authStateChanges() => _auth.userChanges();
 
   Future<UserCredential> signUp(String email, String password) async {
-    return await _auth.createUserWithEmailAndPassword(email: email, password: password);
+    try {
+      return await _auth.createUserWithEmailAndPassword(email: email, password: password);
+    } catch (e) {
+      developer.log('FirebaseAuthDatasource.signUp error: $e');
+      throw FailureMapper.from(e);
+    }
   }
 
   Future<UserCredential> signIn(String email, String password) async {
-    return await _auth.signInWithEmailAndPassword(email: email, password: password);
+    try {
+      return await _auth.signInWithEmailAndPassword(email: email, password: password);
+    } catch (e) {
+      developer.log('FirebaseAuthDatasource.signIn error: $e');
+      throw FailureMapper.from(e);
+    }
   }
 
   Future<UserCredential> signInWithCredential(AuthCredential credential) async {
-    return await _auth.signInWithCredential(credential);
+    try {
+      return await _auth.signInWithCredential(credential);
+    } catch (e) {
+      developer.log('FirebaseAuthDatasource.signInWithCredential error: $e');
+      throw FailureMapper.from(e);
+    }
   }
 
   Future<void> signOut() async => _auth.signOut();
@@ -35,7 +52,8 @@ class FirebaseAuthDatasource {
     required void Function(PhoneAuthCredential credential) verificationCompleted,
     int? forceResendingToken,
   }) async {
-    await _auth.verifyPhoneNumber(
+    try {
+      await _auth.verifyPhoneNumber(
       phoneNumber: phoneNumber,
       timeout: const Duration(seconds: 60),
       verificationCompleted: verificationCompleted,
@@ -43,7 +61,11 @@ class FirebaseAuthDatasource {
       codeSent: codeSent,
       codeAutoRetrievalTimeout: codeAutoRetrievalTimeout,
       forceResendingToken: forceResendingToken,
-    );
+      );
+    } catch (e) {
+      developer.log('FirebaseAuthDatasource.verifyPhoneNumber error: $e');
+      throw FailureMapper.from(e);
+    }
   }
 
   Future<UserCredential> signInWithSmsCode({
@@ -54,7 +76,12 @@ class FirebaseAuthDatasource {
       verificationId: verificationId,
       smsCode: smsCode,
     );
-    return await _auth.signInWithCredential(credential);
+    try {
+      return await _auth.signInWithCredential(credential);
+    } catch (e) {
+      developer.log('FirebaseAuthDatasource.signInWithSmsCode error: $e');
+      throw FailureMapper.from(e);
+    }
   }
 
   // Helpers for Apple Sign In
