@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class ThemeManager {
   ThemeManager._();
 
-  // Default to dark to match the Lotex UI/UX reference.
+  // За замовчуванням використовується темний режим, щоб відповідати еталону інтерфейсу та користувацького досвіду Lotex.
   static final ValueNotifier<ThemeMode> mode = ValueNotifier(ThemeMode.dark);
 
   static void toggle() {

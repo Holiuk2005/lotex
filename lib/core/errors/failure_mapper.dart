@@ -15,7 +15,7 @@ class FailureMapper {
       return _fromCode(error.code, error.message);
     }
 
-    // Heuristic for common web/IO network-ish failures.
+    // Евристика для типових збоїв, пов’язаних із веб-інтерфейсом та введенням-виведенням даних.
     final text = error.toString().toLowerCase();
     if (text.contains('network') ||
         text.contains('socket') ||

@@ -32,12 +32,12 @@ final routerProvider = Provider<GoRouter>((ref) {
   final shellNavigatorProfileKey =
       GlobalKey<NavigatorState>(debugLabel: 'shellProfile');
 
-  // refreshListenable is used to re-run redirect when auth state changes.
-  // Avoid using deprecated `.stream` on StreamProvider.
+  // refreshListenable використовується для повторного виконання перенаправлення при зміні стану автентифікації.
+  // Уникайте використання застарілого методу `.stream` у класі StreamProvider.
   final authRefresh = ValueNotifier<int>(0);
   ref.onDispose(authRefresh.dispose);
-  // Important: listen to the *derived* user provider to avoid a timing race
-  // where redirect runs before `valueOrNull` updates.
+  // Важливо: слідкуйте за *похідним* постачальником користувачів, щоб уникнути ситуації,
+  // коли перенаправлення виконується до оновлення функції `valueOrNull`.
   ref.listen<UserEntity?>(currentUserProvider, (_, __) {
     authRefresh.value++;
   });

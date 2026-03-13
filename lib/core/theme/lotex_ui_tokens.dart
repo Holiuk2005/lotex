@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class LotexUiColors {
-  // Tailwind-ish palette (ported from earlier UI reference values)
+  // Палітра у стилі Tailwind (перенесена з попередніх еталонних значень інтерфейсу користувача)
   static const Color slate950 = Color(0xFF020617);
 
-  // Tailwind default purple (used directly in React components via `purple-*` classes)
-  static const Color purple300 = Color(0xFFD8B4FE);
-  static const Color purple500 = Color(0xFFA855F7);
+  // Колірна палітра у стилі Tailwind (перенесена з попередніх еталонних значень інтерфейсу користувача)
   static const Color purple600 = Color(0xFF9333EA);
 
   static const Color violet400 = Color(0xFFA78BFA);
@@ -24,11 +22,11 @@ class LotexUiColors {
   static const Color neonPink = Color(0xFFEC4899);
   static const Color neonGreen = Color(0xFF10B981);
 
-  // Semantic
+  // Семантика
   static const Color success = neonGreen;
   static const Color error = Color(0xFFEF4444);
 
-  // Defaults referenced by classes (Tailwind default palette)
+  // Значення за замовчуванням, на які посилаються класи (палітра за замовчуванням Tailwind)
   static const Color blue900 = Color(0xFF1E3A8A);
   static const Color indigo950 = Color(0xFF1E1B4B);
 
@@ -38,7 +36,7 @@ class LotexUiColors {
   static const Color slate800 = Color(0xFF1E293B);
   static const Color slate900 = Color(0xFF0F172A);
 
-  // App surfaces / text (ported from legacy AppColors)
+  // Інтерфейси додатків / текст (перенесено зі старого AppColors)
   static const Color lightBackground = Color(0xFFF8FAFC);
   static const Color lightCard = Color(0xFFFFFFFF);
   static const Color lightTitle = Color(0xFF0F172A);
@@ -46,7 +44,7 @@ class LotexUiColors {
   static const Color lightMuted = Color(0xFF94A3B8);
 
   static const Color darkBackground = slate950;
-  // Glass surface: bg-white/5
+  // Поверхня скла: bg-white/5
   static const Color darkCard = Color(0x0DFFFFFF);
   static const Color darkTitle = Color(0xFFE5E7EB);
   static const Color darkBody = Color(0xFFCBD5E1);

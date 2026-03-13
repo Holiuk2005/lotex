@@ -33,7 +33,7 @@ class LotexI18n {
       'productName': 'Product Name',
       'category': 'Category',
 
-      // Categories (type/subtype)
+      // Категорії (тип/підтип)
       'cat_transport': 'Transport',
       'cat_real_estate': 'Real Estate',
       'cat_electronics': 'Electronics',
@@ -156,7 +156,7 @@ class LotexI18n {
       'reset': 'Reset',
       'apply': 'Apply',
 
-      // Checkout (order)
+      // Оформлення замовлення
       'checkoutTitle': 'Checkout',
       'checkoutBranchLabel': 'Branch',
       'checkoutPickCityFirst': 'Please choose a city first.',
@@ -169,11 +169,11 @@ class LotexI18n {
       'checkoutBuyGenerateTtn': 'Buy & generate TTN',
       'checkoutTtnSaved': 'TTN: {ttn} (saved in orders)',
 
-      // Fees
+      // Послуги
       'serviceFee2': 'Service fee (2%)',
       'buyerProtectionFee': 'Buyer protection fee',
 
-      // Payment (checkout)
+      // Оплата (оформлення замовлення)
       'paymentTitle': 'Summary & payment',
       'paymentMethodTitle': 'Payment method',
       'paymentSummaryTitle': 'Summary',
@@ -188,7 +188,7 @@ class LotexI18n {
       'paymentToPay': 'Total',
       'lot': 'Lot',
 
-      // Shipping
+      // Доставка
       'shippingTitle': 'Shipping',
       'shippingStep1': '1. Choose delivery service',
       'shippingStep2': '2. Delivery address',
@@ -212,20 +212,20 @@ class LotexI18n {
       'authRequired': 'Authorization required',
       'arrangeShipping': 'Arrange shipping',
 
-      // Edit lot
+      // Редагувати лот
       'editLot': 'Edit Lot',
       'saveChanges': 'Save changes',
       'lotUpdated': 'Lot updated',
       'editLotNote': 'Note: after the first bid, only title/description can be edited.',
 
-      // Delete lot
+      // Видалити лот
       'deleteLot': 'Delete lot',
       'deleteLotConfirmTitle': 'Delete lot?',
       'deleteLotConfirmBody': 'This action cannot be undone.',
       'delete': 'Delete',
       'lotDeleted': 'Lot deleted',
 
-      // Profile
+      // Профіль
       'profileCollected': 'Collected',
       'profileCreated': 'Created',
       'profileActivity': 'Activity',
@@ -236,7 +236,7 @@ class LotexI18n {
       'auctionsWon': 'Auctions Won',
       'profileUpdated': 'Profile updated',
 
-      // Auction details
+      // Деталі аукціону
       'digitalArt': 'Digital Art',
       'createdBy': 'Created by',
       'auctionEndsIn': 'Auction Ends In',
@@ -246,7 +246,7 @@ class LotexI18n {
       'liveAuction': 'Live Auction',
       'messageSeller': 'Message seller',
 
-      // Chat
+      // Чат
       'searchMessages': 'Search messages...',
       'noMessagesYet': 'No messages yet',
       'online': 'Online',
@@ -257,7 +257,7 @@ class LotexI18n {
       'chatSampleBuyerMessage': 'Hi! Is this piece still available?',
       'chatSampleSellerMessage': 'Yes, the auction is live for another 2 hours!',
 
-      // Auth
+      // Аутентифікація
       'login': 'Login',
       'register': 'Register',
       'noDialogs': 'No dialogs',
@@ -270,10 +270,10 @@ class LotexI18n {
       'enterValidEmail': 'Enter a valid email',
       'minPassword': 'Minimum 6 characters',
 
-      // Favorites
+      // Улюблені
       'favoritesEmpty': "You don't have any favorite lots yet",
 
-      // Create auction
+      // Створити аукціон
       'addPhotoRequired': 'Add a photo',
       'selectDateRequired': 'Select a date',
       'lotCreated': 'Lot created!',
@@ -281,23 +281,23 @@ class LotexI18n {
       'enterDescription': 'Enter a description',
       'invalidPrice': 'Invalid price',
 
-      // Profile meta
+      // Метадані профілю
       'joined': 'Joined',
 
       'createAccount': 'Create account',
       'namePlaceholder': 'Your name',
       'enterName': 'Enter your name',
 
-      // Bidding
+      // Участь у торгах
       'enterAmount': 'Enter amount',
       'bidAccepted': 'Bid accepted!',
       'bidError': 'Bid error',
       'amountMustBeGreaterThan': 'Amount must be greater than',
 
-      // Time
+      // Час
       'ago': 'ago',
 
-      // Errors
+      // Помилки
       'error': 'Error',
       'errorWithDetails': 'Error: {details}',
       'errorNetwork': 'Network error. Please check your connection and try again.',
@@ -305,7 +305,7 @@ class LotexI18n {
       'errorNotFound': 'Not found.',
       'errorTryAgain': 'Something went wrong. Please try again.',
 
-      // Misc
+      // Різне
       'minPrefix': 'Min',
     },
     LotexLanguage.uk: {
@@ -337,7 +337,7 @@ class LotexI18n {
       'productName': 'Назва товару',
       'category': 'Категорія',
 
-      // Categories (type/subtype)
+      // Категорії (тип/підтип)
       'cat_transport': 'Транспорт',
       'cat_real_estate': 'Нерухомість',
       'cat_electronics': 'Електроніка',
@@ -440,7 +440,7 @@ class LotexI18n {
       'expiryDate': 'ММ/РР',
       'cvv': 'CVV',
 
-      // Shipping
+      // Доставка
       'shippingTitle': 'Оформлення доставки',
       'shippingStep1': '1. Оберіть службу доставки',
       'shippingStep2': '2. Адреса доставки',
@@ -464,13 +464,13 @@ class LotexI18n {
       'authRequired': 'Потрібна авторизація',
       'arrangeShipping': 'Оформити доставку',
 
-      // Edit lot
+      // виправити лот
       'editLot': 'Редагувати лот',
       'saveChanges': 'Зберегти зміни',
       'lotUpdated': 'Лот оновлено',
       'editLotNote': 'Після першої ставки можна редагувати лише назву та опис.',
 
-      // Delete lot
+      // Видалити лот
       'deleteLot': 'Видалити лот',
       'deleteLotConfirmTitle': 'Видалити лот?',
       'deleteLotConfirmBody': 'Цю дію неможливо скасувати.',
@@ -497,7 +497,7 @@ class LotexI18n {
       'reset': 'Скинути',
       'apply': 'Застосувати',
 
-      // Checkout (order)
+      // Оформлення замовлення
       'checkoutTitle': 'Оформлення замовлення',
       'checkoutBranchLabel': 'Відділення',
       'checkoutPickCityFirst': 'Спочатку оберіть місто.',
@@ -510,11 +510,11 @@ class LotexI18n {
       'checkoutBuyGenerateTtn': 'Купити та згенерувати ТТН',
       'checkoutTtnSaved': 'ТТН: {ttn} (збережено в orders)',
 
-      // Fees
+      // Послуги
       'serviceFee2': 'Сервісний збір (2%)',
       'buyerProtectionFee': 'Збір захисту покупця',
 
-      // Payment (checkout)
+      // Оплата (оформлення замовлення)
       'paymentTitle': 'Підсумок і оплата',
       'paymentMethodTitle': 'Спосіб оплати',
       'paymentSummaryTitle': 'Разом',
@@ -529,7 +529,7 @@ class LotexI18n {
       'paymentToPay': 'До сплати',
       'lot': 'Лот',
 
-      // Profile
+      // Профіль
       'profileCollected': 'Зібрані',
       'profileCreated': 'Створені',
       'profileActivity': 'Активність',
@@ -540,7 +540,7 @@ class LotexI18n {
       'auctionsWon': 'Виграно аукціонів',
       'profileUpdated': 'Профіль оновлено',
 
-      // Auction details
+      // Інформація про аукціон
       'digitalArt': 'Цифрове мистецтво',
       'createdBy': 'Створив(ла)',
       'auctionEndsIn': 'Аукціон закінчується через',
@@ -550,7 +550,7 @@ class LotexI18n {
       'liveAuction': 'Аукціон наживо',
       'messageSeller': 'Написати продавцю',
 
-      // Chat
+      // Чат
       'searchMessages': 'Пошук повідомлень...',
       'noMessagesYet': 'Поки що немає повідомлень',
       'noDialogs': 'Немає діалогів',
@@ -563,10 +563,10 @@ class LotexI18n {
       'chatSampleBuyerMessage': 'Привіт! Цей лот ще доступний?',
       'chatSampleSellerMessage': 'Так, аукціон ще триває приблизно 2 години!',
 
-      // Favorites
+      // Улюблені
       'favoritesEmpty': 'У вас поки що немає обраних лотів',
 
-      // Create auction
+      // Створити аукціон
       'addPhotoRequired': 'Додайте фото',
       'selectDateRequired': 'Оберіть дату',
       'lotCreated': 'Лот створено!',
@@ -574,10 +574,10 @@ class LotexI18n {
       'enterDescription': 'Введіть опис',
       'invalidPrice': 'Некоректна ціна',
 
-      // Profile meta
+      // Метадані профілю
       'joined': 'Приєднався/лась',
 
-      // Auth
+      // Аутентифікація
       'login': 'Вхід',
       'register': 'Реєстрація',
       'signIn': 'УВІЙТИ',
@@ -592,7 +592,7 @@ class LotexI18n {
       'namePlaceholder': "Ваше ім'я",
       'enterName': "Введіть ім'я",
 
-      // Bidding
+      // Торги
       'enterAmount': 'Введіть суму',
       'bidAccepted': 'Ставку прийнято!',
       'bidError': 'Помилка ставки',
@@ -601,7 +601,7 @@ class LotexI18n {
       // Time
       'ago': 'тому',
 
-      // Errors
+      // Помилки
       'error': 'Помилка',
       'errorWithDetails': 'Помилка: {details}',
       'errorNetwork': 'Проблема з мережею. Перевірте інтернет і спробуйте ще раз.',
@@ -609,7 +609,7 @@ class LotexI18n {
       'errorNotFound': 'Не знайдено.',
       'errorTryAgain': 'Щось пішло не так. Спробуйте ще раз.',
 
-      // Misc
+      // Різне
       'minPrefix': 'Мін',
     },
   };

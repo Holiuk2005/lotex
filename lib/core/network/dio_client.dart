@@ -4,14 +4,14 @@ import 'package:dio/dio.dart';
 import 'package:lotex/core/config/app_config.dart';
 import 'package:lotex/services/secure_storage_service.dart';
 
-/// Creates a [Dio] client configured for a JWT backend.
+/// Створює клієнт [Dio], налаштований для серверної частини JWT.
 ///
-/// - Adds `Authorization: Bearer <accessToken>` automatically.
-/// - Optionally refreshes tokens on 401 if `refreshToken` exists.
+/// - Автоматично додає `Authorization: Bearer <accessToken>`.
+/// - За бажанням оновлює токени при коді 401, якщо існує `refreshToken`.
 ///
-/// NOTE: Refresh endpoint/shape is assumed as:
+/// ПРИМІТКА: Вважається, що кінцева точка/форма оновлення має вигляд:
 /// POST `/auth/refresh` -> { accessToken: string, refreshToken: string }
-/// Adjust once your backend contract is known.
+/// Налаштуйте після того, як стане відомий ваш бекенд-контракт.
 class DioClient {
   static Dio create({Dio? base}) {
     final dio = base ?? Dio();
@@ -28,7 +28,7 @@ class DioClient {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // If apiBaseUrl isn't configured, don't attach anything.
+          // Якщо apiBaseUrl не налаштовано, нічого не додавати.
           if (dio.options.baseUrl.isEmpty) {
             return handler.next(options);
           }
@@ -40,7 +40,7 @@ class DioClient {
           handler.next(options);
         },
         onError: (error, handler) async {
-          // Only try refresh for 401 from our configured backend.
+          // Спробувати оновлення лише у разі помилки 401 з нашого налаштованого сервера.
           if (dio.options.baseUrl.isEmpty) return handler.next(error);
 
           final status = error.response?.statusCode;
@@ -56,7 +56,7 @@ class DioClient {
             return handler.next(error);
           }
 
-          // Retry the original request with the new token.
+          // Повторити початковий запит із новим токеном.
           final newToken = await SecureStorageService.getAccessToken();
           final retryOptions = requestOptions;
           retryOptions.extra['__retried'] = true;
@@ -103,7 +103,7 @@ class _RefreshCoordinator {
         '/auth/refresh',
         data: {'refreshToken': refreshToken},
         options: Options(
-          // Prevent infinite loops: do not attach stale access token here.
+          // Запобігання нескінченним циклам: не підключайте тут неактуальний токен доступу.
           headers: <String, dynamic>{},
           extra: const {'__retried': true},
         ),
@@ -126,7 +126,7 @@ class _RefreshCoordinator {
       completer.complete(true);
       return completer.future;
     } catch (_) {
-      // If refresh fails, wipe tokens so UI can re-auth.
+      // Якщо оновлення не вдалося, видалити токени, щоб інтерфейс міг виконати повторну автентифікацію
       await SecureStorageService.deleteAllTokens();
       completer.complete(false);
       return completer.future;

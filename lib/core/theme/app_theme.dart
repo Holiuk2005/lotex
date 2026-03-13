@@ -58,7 +58,7 @@ class AppTheme {
           textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
-      // cardTheme: customized via cardColor and components
+      // cardTheme: налаштовується за допомогою параметрів cardColor та компонентів
     );
   }
 
@@ -118,7 +118,7 @@ class AppTheme {
           textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
-      // cardTheme: customized via cardColor and components
+      // cardTheme: налаштовується за допомогою параметрів cardColor та компонентів
     );
   }
 }
