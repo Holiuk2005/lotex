@@ -2,14 +2,15 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:typed_data';
 
-/// Small LRU cache for decoded base64 images.
+/// Малий LRU-кеш для декодованих base64-зображень.
 ///
-/// Decoding base64 during list/grid rebuilds can cause jank on Web and low-end
-/// devices. This cache keeps a limited number of decoded byte buffers in memory.
+/// Декодування base64 під час ребілдів списків/сіток може спричиняти
+/// затримки на web та слабких пристроях. Кеш зберігає обмежену кількість
+/// декодованих буферів у пам'яті.
 class Base64ImageCache {
   static final LinkedHashMap<String, Uint8List> _cache = LinkedHashMap();
 
-  /// Tuneable limit. Keep it conservative to avoid memory bloat.
+  /// Налаштовуваний ліміт. Тримаємо консервативно, щоб уникнути надмірного споживання пам'яті.
   static int maxEntries = 40;
 
   static String _stripDataUri(String input) {
@@ -21,8 +22,8 @@ class Base64ImageCache {
   }
 
   static String _cacheKey(String payload, {String? cacheKey}) {
-    // Do not store full base64 payload as key; it's large.
-    // hashCode is per-run, but that's fine for an in-memory cache.
+    // Повний base64 не зберігаємо як ключ — він завеликий.
+    // hashCode залежить від запуску, але для in-memory кешу це нормально.
     final safe = payload.length > 32 ? payload.substring(0, 32) : payload;
     return cacheKey ?? '${payload.length}:${payload.hashCode}:$safe';
   }
@@ -35,7 +36,7 @@ class Base64ImageCache {
     }
   }
 
-  /// Returns decoded bytes or null if input is invalid.
+  /// Повертає декодовані байти або null, якщо вхідні дані некоректні.
   static Uint8List? decode(String base64, {String? cacheKey}) {
     final payload = _stripDataUri(base64);
     if (payload.isEmpty) return null;

@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-/// Helper to fetch a document and handle permission-denied gracefully.
+/// Допоміжна функція для отримання документа із коректною обробкою permission-denied.
 Future<DocumentSnapshot<Map<String, dynamic>>?> fetchDocSafely({
   required BuildContext context,
   required DocumentReference<Map<String, dynamic>> ref,

@@ -1,10 +1,13 @@
 
+// Увага: цей файл є запасною реалізацією інтерфейсу AuctionRepository.
+// У проекті активно використовується AuctionRepository (data/repositories/auction_repository.dart),
+// тому AuctionRepositoryImpl зараз не задіяний у продакшені.
+// Якщо знадобиться — підключіть його через Riverpod провайдер.
+import 'dart:developer' as developer;
+
 import '../domain/auction_repository.dart';
 import '../domain/entities/auction_entity.dart';
 import 'firebase_auction_datasource.dart';
-import 'package:lotex/core/errors/failure_mapper.dart';
-
-import 'dart:developer' as developer;
 
 class AuctionRepositoryImpl implements AuctionRepository {
   final FirebaseAuctionDatasource datasource;
@@ -12,12 +15,9 @@ class AuctionRepositoryImpl implements AuctionRepository {
 
   @override
   Future<List<AuctionEntity>> getAuctions() {
-    try {
-      return datasource.getAuctions();
-    } catch (e) {
-      developer.log('Auction getAuctions error: $e');
-      throw FailureMapper.from(e);
-    }
+    // Datasource вже маппує помилки через FailureMapper — додатковий try/catch не потрібен.
+    developer.log('[AuctionRepositoryImpl] getAuctions викликано');
+    return datasource.getAuctions();
   }
 
   @override
@@ -28,17 +28,14 @@ class AuctionRepositoryImpl implements AuctionRepository {
     required DateTime endDate,
     required String imageBase64,
   }) {
-    try {
-      return datasource.createAuction(
-        title: title,
-        description: description,
-        startPrice: startPrice,
-        endDate: endDate,
-        imageBase64: imageBase64,
-      );
-    } catch (e) {
-      developer.log('createAuction error: $e');
-      throw FailureMapper.from(e);
-    }
+    // Datasource вже маппує помилки через FailureMapper — додатковий try/catch не потрібен.
+    developer.log('[AuctionRepositoryImpl] createAuction викликано');
+    return datasource.createAuction(
+      title: title,
+      description: description,
+      startPrice: startPrice,
+      endDate: endDate,
+      imageBase64: imageBase64,
+    );
   }
 }

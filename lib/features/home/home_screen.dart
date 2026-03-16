@@ -28,6 +28,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _filter = 'live';
   FilterState _filters = const FilterState();
 
+  // Мемоізація Firestore query: перестворюємось лише при зміні фільтрів.
+  // StreamBuilder при зміні stream пере-підписується — це зайвий читання Firestore.
+  Object? _filterKey;
+  Query<Map<String, dynamic>>? _cachedQuery;
+
   static const double _minPrice = 0;
   static const double _maxPrice = 100000;
 
@@ -48,6 +53,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Query<Map<String, dynamic>> getFilteredQuery() {
+    // Мемоізація: повертаємо кешований екземпляр якщо фільтри не змінились.
+    final key = (_filters, _filter);
+    if (identical(key, _filterKey) || key == _filterKey) {
+      return _cachedQuery!;
+    }
+    _filterKey = key;
     final hasPriceFilter = _filters.priceRange.start > _minPrice || _filters.priceRange.end < _maxPrice;
 
     Query<Map<String, dynamic>> q = FirebaseFirestore.instance.collection('auctions');
@@ -79,8 +90,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           .where('currentPrice', isLessThanOrEqualTo: _filters.priceRange.end);
     }
 
-    // Firestore constraint: if you use range filters (>= / <=) on a field,
-    // the first orderBy must be on that same field.
+    // Firestore: якщо є range-фільтри (>= / <=), перший orderBy — по тому ж полю.
     switch (_filters.sortBy) {
       case 'price_asc':
         q = q.orderBy('currentPrice').orderBy('createdAt', descending: true);
@@ -96,6 +106,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         break;
     }
 
+    _cachedQuery = q;
     return q;
   }
 
@@ -242,9 +253,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               separatorBuilder: (_, __) => const SizedBox(height: 16),
                               itemBuilder: (context, index) {
                                 final auction = filteredByTime[index];
-                                return AuctionCard(
-                                  auction: auction,
-                                  onTap: () => context.push('/auction', extra: auction),
+                                return RepaintBoundary(
+                                  child: AuctionCard(
+                                    auction: auction,
+                                    onTap: () => context.push('/auction', extra: auction),
+                                  ),
                                 );
                               },
                             )
@@ -260,9 +273,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               itemCount: filteredByTime.length,
                               itemBuilder: (context, index) {
                                 final auction = filteredByTime[index];
-                                return AuctionCard(
-                                  auction: auction,
-                                  onTap: () => context.push('/auction', extra: auction),
+                                return RepaintBoundary(
+                                  child: AuctionCard(
+                                    auction: auction,
+                                    onTap: () => context.push('/auction', extra: auction),
+                                  ),
                                 );
                               },
                             ));

@@ -122,13 +122,13 @@ class _LotexAuctionCardV2State extends ConsumerState<LotexAuctionCardV2> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: _hovered
-                    ? LotexUiColors.purple500.withAlpha((0.30 * 255).round())
+                    ? LotexUiColors.violet500.withAlpha((0.30 * 255).round())
                     : Colors.white.withAlpha((0.10 * 255).round()),
               ),
               boxShadow: [
                 BoxShadow(
                   color: _hovered
-                      ? LotexUiColors.purple500.withAlpha((0.20 * 255).round())
+                      ? LotexUiColors.violet500.withAlpha((0.20 * 255).round())
                       : Colors.black.withAlpha((0.30 * 255).round()),
                   blurRadius: 24,
                   offset: const Offset(0, 16),
@@ -264,7 +264,7 @@ class _LotexAuctionCardV2State extends ConsumerState<LotexAuctionCardV2> {
                                           fontSize: 18,
                                           fontWeight: FontWeight.w700,
                                           height: 1.2,
-                                          color: _hovered ? LotexUiColors.purple300 : Colors.white,
+                                          color: _hovered ? LotexUiColors.violet400 : Colors.white,
                                         ),
                                       ),
                                       const SizedBox(height: 4),
@@ -378,7 +378,7 @@ class _LotexAuctionCardV2State extends ConsumerState<LotexAuctionCardV2> {
                                                 borderRadius: BorderRadius.circular(12),
                                                 boxShadow: [
                                                   BoxShadow(
-                                                    color: LotexUiColors.purple500.withAlpha((0.25 * 255).round()),
+                                                    color: LotexUiColors.violet500.withAlpha((0.25 * 255).round()),
                                                     blurRadius: 18,
                                                     offset: const Offset(0, 10),
                                                   ),
@@ -573,7 +573,7 @@ class _ProgressRingState extends State<_ProgressRing> {
               return CircularProgressIndicator(
                 value: value,
                 strokeWidth: 3,
-                valueColor: const AlwaysStoppedAnimation<Color>(LotexUiColors.purple500),
+                valueColor: AlwaysStoppedAnimation<Color>(LotexUiColors.violet500),
                 backgroundColor: Colors.transparent,
               );
             },

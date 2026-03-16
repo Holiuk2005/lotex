@@ -1,6 +1,7 @@
 
 import 'dart:developer' as developer;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:lotex/core/errors/failure_mapper.dart';
 import '../domain/entities/auction_entity.dart';
 
@@ -16,7 +17,7 @@ class FirebaseAuctionDatasource {
           .get();
       return snapshot.docs.map((doc) => AuctionEntity.fromDocument(doc)).toList();
     } catch (e) {
-      developer.log('FirebaseAuctionDatasource.getAuctions error: $e');
+      developer.log('[FirebaseAuctionDatasource] getAuctions помилка: $e');
       throw FailureMapper.from(e);
     }
   }
@@ -29,6 +30,8 @@ class FirebaseAuctionDatasource {
     required String imageBase64,
   }) async {
     try {
+      // Отримуємо sellerId з Firebase Auth — порожній рядок спричиняв порушення правил Firestore.
+      final sellerId = FirebaseAuth.instance.currentUser?.uid ?? '';
       final auction = AuctionEntity(
         id: '',
         title: title,
@@ -38,11 +41,11 @@ class FirebaseAuctionDatasource {
         startPrice: startPrice,
         currentPrice: startPrice,
         endDate: endDate,
-        sellerId: '',
+        sellerId: sellerId,
       );
       await firestore.collection('auctions').add(auction.toDocument());
     } catch (e) {
-      developer.log('FirebaseAuctionDatasource.createAuction error: $e');
+      developer.log('[FirebaseAuctionDatasource] createAuction помилка: $e');
       throw FailureMapper.from(e);
     }
   }

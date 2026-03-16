@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../features/auction/domain/entities/auction_entity.dart';
 import '../../features/auction/presentation/pages/auction_details_screen.dart';
 import '../../features/auction/presentation/pages/create_auction_screen.dart';
 import '../../features/auction/presentation/pages/edit_auction_screen.dart';
+import '../../features/auction/presentation/providers/auction_detail_provider.dart';
 import '../../features/profile/presentation/pages/profile_screen.dart';
 import '../../features/profile/presentation/pages/settings_screen.dart';
 import '../../features/profile/presentation/pages/public_profile_screen.dart';
@@ -32,12 +32,11 @@ final routerProvider = Provider<GoRouter>((ref) {
   final shellNavigatorProfileKey =
       GlobalKey<NavigatorState>(debugLabel: 'shellProfile');
 
-  // refreshListenable використовується для повторного виконання перенаправлення при зміні стану автентифікації.
-  // Уникайте використання застарілого методу `.stream` у класі StreamProvider.
+  // refreshListenable — оновлює GoRouter при зміні стану автентифікації.
+  // Відстежуємо похідний провайдер currentUserProvider, щоб redirect спрацьовував
+  // лише після того, як valueOrNull оновився.
   final authRefresh = ValueNotifier<int>(0);
   ref.onDispose(authRefresh.dispose);
-  // Важливо: слідкуйте за *похідним* постачальником користувачів, щоб уникнути ситуації,
-  // коли перенаправлення виконується до оновлення функції `valueOrNull`.
   ref.listen<UserEntity?>(currentUserProvider, (_, __) {
     authRefresh.value++;
   });
@@ -127,39 +126,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/auction/:auctionId',
         parentNavigatorKey: rootNavigatorKey,
+        // Дані завантажуються через auctionDetailProvider (StreamProvider) —
+        // Firestore запити НЕ виконуються безпосередньо в builder роутера.
         builder: (context, state) {
           final id = state.pathParameters['auctionId'] ?? '';
           if (id.isEmpty) {
-            return const Scaffold(body: Center(child: Text('Auction not found')));
+            return const Scaffold(
+              body: Center(child: Text('Лот не знайдено')),
+            );
           }
-
-          return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-            future: FirebaseFirestore.instance.collection('auctions').doc(id).get(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
-                return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                );
-              }
-              if (snapshot.hasError) {
-                final err = snapshot.error;
-                if (err is FirebaseException && err.code == 'permission-denied') {
-                  return const Scaffold(
-                    body: Center(child: Text('У вас немає доступу до цього аукціону')),
-                  );
-                }
-                return Scaffold(
-                  body: Center(child: Text('Error: ${snapshot.error}')),
-                );
-              }
-              final doc = snapshot.data;
-              if (doc == null || !doc.exists) {
-                return const Scaffold(body: Center(child: Text('Auction not found')));
-              }
-              final auction = AuctionEntity.fromDocument(doc);
-              return AuctionDetailsScreen(auction: auction);
-            },
-          );
+          return _AuctionDetailLoader(auctionId: id);
         },
       ),
 
@@ -194,9 +170,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/checkout',
         parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) {
-          // Demo-friendly defaults.
           final extra = state.extra;
-          double itemPrice = 1200;
+          // Якщо extra відсутній або не містить itemPrice — показуємо помилку.
+          double? itemPrice;
           double shippingCost = 0;
           if (extra is Map) {
             final p = extra['itemPrice'];
@@ -204,7 +180,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             if (p is num) itemPrice = p.toDouble();
             if (s is num) shippingCost = s.toDouble();
           }
-
+          if (itemPrice == null) {
+            return const Scaffold(
+              body: Center(
+                child: Text('Помилка: не передано ціну товару для оформлення замовлення.'),
+              ),
+            );
+          }
           return OrderCheckoutScreen(
             itemPrice: itemPrice,
             shippingCost: shippingCost,
@@ -226,3 +208,27 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.onDispose(router.dispose);
   return router;
 });
+
+/// Виджет-завантажник для маршруту /auction/:auctionId.
+/// Використовує [auctionDetailProvider] (StreamProvider) замість прямого Firestore-запиту в роутері.
+class _AuctionDetailLoader extends ConsumerWidget {
+  final String auctionId;
+  const _AuctionDetailLoader({required this.auctionId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final auctionAsync = ref.watch(auctionDetailProvider(auctionId));
+    return auctionAsync.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) {
+        final msg = e.toString().contains('permission-denied')
+            ? 'У вас немає доступу до цього аукціону.'
+            : 'Помилка завантаження: $e';
+        return Scaffold(body: Center(child: Text(msg)));
+      },
+      data: (auction) => AuctionDetailsScreen(auction: auction),
+    );
+  }
+}

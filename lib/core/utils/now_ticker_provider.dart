@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Shared ticker to trigger UI updates that depend on current time.
+/// Спільний ticker для оновлення UI-віджетів, які залежать від поточного часу.
 ///
-/// Used for countdown timers on cards so they update in real time without
-/// creating a Timer per widget.
+/// Використовується для таймерів зворотного відліку на картках, щоб вони
+/// оновлювались в реальному часі без Timer для кожного віджета.
 final nowTickerProvider = StreamProvider<DateTime>((ref) {
   return Stream<DateTime>.periodic(
     const Duration(seconds: 1),

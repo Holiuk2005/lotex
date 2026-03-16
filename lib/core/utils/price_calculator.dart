@@ -33,7 +33,7 @@ class PriceCalculator {
   }
 
   static double _round2(double v) {
-    // Avoid floating point artifacts in UI/Firestore.
+    // Уникаємо артефактів з плаваючою крапкою у UI/Firestore.
     return double.parse(v.toStringAsFixed(2));
   }
 }

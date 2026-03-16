@@ -10,8 +10,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart'
   show TargetPlatform, defaultTargetPlatform, kIsWeb;
-// Conditional import: web uses `web_js_interop.dart` (dart:js_interop),
-// non-web uses a small stub that returns `null` for `telegramWebApp`.
+// Умовний імпорт: web використовує `web_js_interop.dart` (dart:js_interop),
+// не-web — stub-файл, що повертає `null` для `telegramWebApp`.
 import 'src/web_js_interop_stub.dart'
     if (dart.library.js) 'src/web_js_interop.dart' as web;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,8 +31,8 @@ const bool _useFirebaseEmulators = bool.fromEnvironment(
 
 const bool _useAuthEmulator = bool.fromEnvironment(
   'USE_AUTH_EMULATOR',
-  // When running against Firestore/Storage emulators, using the Auth emulator
-  // avoids "unauthorized"/"permission-denied" caused by missing auth context.
+  // Якщо використовуємо емулятор Firestore/Storage — вмикаємо також Auth emulator,
+  // щоб уникнути помилок "unauthorized"/"permission-denied" через відсутній auth-контекст.
   defaultValue: true,
 );
 
@@ -77,9 +77,8 @@ class _LotexBootstrapState extends State<LotexBootstrap> {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    // Avoid rare Firestore web SDK internal assertion failures caused by local
-    // persistence state (especially during hot-restart / multi-tab / quick nav).
-    // This disables offline persistence.
+    // Вимикаємо офлайн-персистентність, щоб уникнути рідких внутрішніх
+    // assertion-помилок Firestore SDK на web (особливо при hot-restart / multi-tab / швидкій навігації).
     FirebaseFirestore.instance.settings =
         const Settings(persistenceEnabled: false);
 
@@ -92,7 +91,7 @@ class _LotexBootstrapState extends State<LotexBootstrap> {
       await _connectToFirebaseEmulators();
     }
 
-    // Web-only: use JS interop accessor (returns null on non-web platforms).
+    // Тільки web: отримуємо Telegram WebApp через JS interop (на нативних платформах повертає null).
     try {
       final webApp = web.telegramWebApp;
       if (webApp != null) {
@@ -111,7 +110,7 @@ class _LotexBootstrapState extends State<LotexBootstrap> {
       developer.log('Telegram detection failed: $e', name: 'Lotex');
     }
 
-    // Make the mobile loading moment visible and consistent.
+    // На мобільних — додаємо паузу, щоб момент завантаження був видимим і рівномірним.
     if (!kIsWeb &&
         (defaultTargetPlatform == TargetPlatform.android ||
             defaultTargetPlatform == TargetPlatform.iOS)) {
@@ -133,8 +132,7 @@ class _LotexBootstrapState extends State<LotexBootstrap> {
             home: _StartupErrorScreen(error: snapshot.error),
           );
         } else if (snapshot.connectionState != ConnectionState.done) {
-          // Web already has HTML splash; show a minimal, app-like loader mainly
-          // for native mobile platforms.
+          // На web вже є HTML-сплеш; тут показуємо мінімальний лоадер для нативних платформ.
           child = MaterialApp(
             debugShowCheckedModeBanner: false,
             theme: AppTheme.light(),
@@ -418,7 +416,7 @@ String _emulatorHost() {
   if (kIsWeb) return 'localhost';
   switch (defaultTargetPlatform) {
     case TargetPlatform.android:
-      // Android emulator maps host loopback to 10.0.2.2
+      // Android-емулятор маппує loopback хоста на 10.0.2.2
       return '10.0.2.2';
     default:
       return 'localhost';
@@ -487,8 +485,8 @@ class _AuthGate extends StatelessWidget {
           return const LotexAppLoadingScreen();
         }
 
-        // Navigation between /login <-> /home is handled by GoRouter.redirect.
-        // Here we only ensure we don't show an empty frame.
+        // Навігація між /login <-> /home керується GoRouter.redirect.
+        // Тут лише гарантуємо, що не показуємо порожній кадр.
         return child ?? const SizedBox.shrink();
       },
     );

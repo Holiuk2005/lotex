@@ -33,9 +33,9 @@ class LotexCurrency {
     }
   }
 
-  // Simple LRU cache for currency formatters.
-  // Formatting is called frequently during list rebuilds; caching avoids repeated
-  // NumberFormat allocations and improves smoothness on Web and mobile.
+  // Простий LRU-кеш для форматерів валют.
+  // Форматування викликається часто під час ребілдів списків; кеш уникає повторного
+  // створення NumberFormat і покращує плавність на Web і мобільних.
   static final LinkedHashMap<String, NumberFormat> _formatterCache = LinkedHashMap();
   static int maxCachedFormatters = 48;
 

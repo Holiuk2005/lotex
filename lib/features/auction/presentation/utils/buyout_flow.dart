@@ -22,7 +22,7 @@ Future<void> runBuyoutFlow({
   required WidgetRef ref,
   required AuctionEntity auction,
 }) async {
-  // Try sync user first, then fall back to latest auth state (prevents false-null on cold start).
+  // Спочатку читаємо sync-користувача, потім падбек на authStateChanges (запобігає false-null при cold start).
   final user = ref.read(currentUserProvider) ?? ref.read(authStateChangesProvider).value;
   final lang = ref.read(lotexLanguageProvider);
 
@@ -30,7 +30,7 @@ Future<void> runBuyoutFlow({
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(LotexI18n.tr(lang, 'authRequired'))),
     );
-    return; // stay on page; do not redirect away from buyout flow
+    return; // лишаємось на сторінці, не перенаправляємо
   }
 
   final buyout = auction.buyoutPrice;
@@ -74,8 +74,8 @@ Future<void> runBuyoutFlow({
         );
 
     if (!context.mounted) return;
-    // After a successful buyout, open chat with the seller.
-    // (Shipping can still be accessed from the lot screen if needed.)
+    // Після успішного викупу — відкриваємо чат з продавцем.
+    // (Доставку все одно можна оформити зі сторінки лоту.)
     try {
       final sellerId = auction.sellerId;
       if (sellerId.trim().isNotEmpty && sellerId != user.uid) {
@@ -95,10 +95,8 @@ Future<void> runBuyoutFlow({
         );
         return;
       }
-    } catch (e) {
-      // Log error for diagnostics
-      // ignore: avoid_print
-      // developer.log could be used here if desired.
+    } catch (_) {
+      // Ігноруємо помилку відкриття чату — перехід до доставки все одно відбудеться.
     }
 
     context.push('/shipping/${auction.id}');

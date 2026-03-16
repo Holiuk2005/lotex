@@ -13,11 +13,11 @@ class AuctionImagesStorageService {
       : _storage = storage ?? FirebaseStorage.instance,
         _uuid = uuid ?? const Uuid();
 
-  /// Uploads images to: auction_images/{auctionId}/{imageId}
-  /// Returns download URLs in the same order as [files].
+  /// Завантажує зображення за шляхом: auction_images/{auctionId}/{imageId}
+  /// Повертає URL для завантаження в тому самому порядку, що і [files].
   ///
-  /// Behavior: if any upload fails, already uploaded files are deleted
-  /// and the error is rethrown.
+  /// Поведінка: якщо будь-яке завантаження не вдалось, вже завантажені файли
+  /// видаляються, а помилка перекидається.
   Future<List<String>> uploadAuctionImages({
     required String auctionId,
     required List<XFile> files,
@@ -50,7 +50,7 @@ class AuctionImagesStorageService {
 
       return List.unmodifiable(urls);
     } catch (_) {
-      // Best-effort cleanup.
+      // Спроба очищення при помилці.
       await Future.wait(
         uploadedRefs.map((r) async {
           try {
@@ -69,7 +69,7 @@ class AuctionImagesStorageService {
     if (name.endsWith('.gif')) return 'image/gif';
     if (name.endsWith('.jpg') || name.endsWith('.jpeg')) return 'image/jpeg';
 
-    // Magic numbers (best-effort)
+    // Магічні числа для визначення типу зображення.
     if (bytes.length >= 8 &&
         bytes[0] == 0x89 &&
         bytes[1] == 0x50 &&

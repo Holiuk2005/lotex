@@ -94,8 +94,15 @@ abstract class AuctionEntity with _$AuctionEntity {
         final v = numOrStringToDouble(raw, fallback: 0.0);
         return v > 0 ? v : null;
       }(),
-      endDate: DateTime.tryParse(data['endDate'] ?? '') ??
-          DateTime.now().add(const Duration(days: 1)),
+      // Підтримуємо обидва формати: Firestore Timestamp та ISO string.
+      endDate: () {
+        final raw = data['endDate'];
+        if (raw is Timestamp) return raw.toDate();
+        if (raw is String && raw.isNotEmpty) {
+          return DateTime.tryParse(raw) ?? DateTime.now().add(const Duration(days: 1));
+        }
+        return DateTime.now().add(const Duration(days: 1));
+      }(),
       sellerId: data['sellerId'] ?? '',
       bidCount: data['bidCount'] ?? 0,
       lastBidderId: data['lastBidderId'],

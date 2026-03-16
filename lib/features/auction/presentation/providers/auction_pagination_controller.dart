@@ -48,7 +48,7 @@ class AuctionPaginationController
   Future<void> fetchNextPage() async {
     if (!_hasMore) return;
 
-    // Prevent overlapping loads.
+    // Запобігаємо паралельні завантаження.
     final isAlreadyLoading = state.isLoading;
     if (isAlreadyLoading) return;
 
@@ -84,7 +84,7 @@ class AuctionPaginationController
         ),
       );
     } catch (e) {
-      // Keep current list on screen, but stop the loading-more flag.
+      // Зберігаємо поточний список на екрані, але зупиняємо Запит наступної сторінки.
       state = AsyncValue.data(
         AuctionListState.success(
           items: List.unmodifiable(currentItems),

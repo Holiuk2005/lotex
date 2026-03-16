@@ -11,10 +11,10 @@ class AuthService {
   })  : _auth = auth ?? FirebaseAuth.instance,
         _firestore = firestore ?? FirebaseFirestore.instance;
 
-  /// Creates an auth user and immediately persists a matching Firestore user doc.
+  /// Створює auth-користувача та відразу зберігає відповідний документ у Firestore.
   ///
-  /// Firestore doc path: users/{uid}
-  /// Fields: uid, email, username, role (default 'user'), balance (default 0.0), createdAt.
+  /// Шлях документа Firestore: users/{uid}
+  /// Поля: uid, email, username, role (за замовчуванням 'user'), balance (за замовчуванням 0.0), createdAt.
   Future<void> signUp({
     required String email,
     required String password,
@@ -54,11 +54,11 @@ class AuthService {
         'createdAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     } on FirebaseException catch (e) {
-      // Best-effort cleanup to avoid "auth user without profile".
+      // Спроба очищення, щоб не залишати auth-користувача без профілю.
       try {
         await user.delete();
       } catch (_) {
-        // ignore
+        // ігноруємо
       }
 
       throw Exception(_friendlyFirestoreError(e));
@@ -66,7 +66,7 @@ class AuthService {
       try {
         await user.delete();
       } catch (_) {
-        // ignore
+        // ігноруємо
       }
 
       throw Exception('Failed to save user profile. Please try again.');
@@ -76,30 +76,30 @@ class AuthService {
   String _friendlyAuthError(FirebaseAuthException e) {
     switch (e.code) {
       case 'email-already-in-use':
-        return 'Email already in use.';
+        return 'Email вже використовується.';
       case 'invalid-email':
-        return 'Invalid email address.';
+        return 'Невірна адреса електронної пошти.';
       case 'weak-password':
-        return 'Password is too weak.';
+        return 'Пароль занадто слабкий.';
       case 'operation-not-allowed':
-        return 'Email/password sign up is disabled.';
+        return 'Реєстрація через email/пароль вимкнена.';
       case 'network-request-failed':
-        return 'Network error. Please try again.';
+        return 'Помилка мережі. Спробуйте ще раз.';
       default:
-        // Keep a clean message for unknown auth errors.
-        return 'Sign up failed. Please try again.';
+        // Чисте повідомлення для невідомих auth-помилок.
+        return 'Не вдалось зареєструватись. Спробуйте ще раз.';
     }
   }
 
   String _friendlyFirestoreError(FirebaseException e) {
-    // Firestore uses e.code like "permission-denied", "unavailable", etc.
+    // Firestore використовує e.code як: "permission-denied", "unavailable" тощо.
     switch (e.code) {
       case 'permission-denied':
-        return 'Permission denied. Check Firestore rules.';
+        return 'Доступ заборонено. Перевірте правила Firestore.';
       case 'unavailable':
-        return 'Service unavailable. Please try again.';
+        return 'Сервіс недоступний. Спробуйте ще раз.';
       default:
-        return 'Failed to save user profile. Please try again.';
+        return 'Не вдалось зберегти профіль. Спробуйте ще раз.';
     }
   }
 }

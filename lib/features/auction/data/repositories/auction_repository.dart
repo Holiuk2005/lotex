@@ -29,7 +29,7 @@ class AuctionRepository {
     if (name.endsWith('.webp')) return 'image/webp';
     if (name.endsWith('.jpg') || name.endsWith('.jpeg')) return 'image/jpeg';
 
-    // Magic numbers (best-effort)
+    // Магічні числа для визначення типу зображення.
     if (bytes.length >= 8 &&
         bytes[0] == 0x89 &&
         bytes[1] == 0x50 &&
@@ -52,7 +52,7 @@ class AuctionRepository {
       return 'image/jpeg';
     }
 
-    // Default to a supported type to satisfy Storage rules.
+    // За замовчуванням — підтримуваний формат для Storage правил.
     return 'image/jpeg';
   }
 
@@ -61,7 +61,7 @@ class AuctionRepository {
       final decoded = img.decodeImage(inputBytes);
       if (decoded == null) return inputBytes;
 
-      // Resize to a reasonable max side so Firestore base64 stays small.
+      // Зміна розміру до розумного максимального боку, щоб base64 у Firestore залишався невеликим.
       const int maxSide = 1280;
       img.Image processed = decoded;
       final int w = decoded.width;
@@ -114,9 +114,8 @@ class AuctionRepository {
     final docRef = _firestore.collection('auctions').doc();
     final auctionId = docRef.id;
 
-    // Maximum raw bytes allowed for Base64 in Firestore (to avoid document size limits)
-    const int maxImageBytes = 512 * 1024; // 512 KB
-    const int maxStorageBytes = 10 * 1024 * 1024; // 10 MB (must match Storage rules)
+    const int maxImageBytes = 512 * 1024; // 512 КБ — максимум для base64 у Firestore
+    const int maxStorageBytes = 10 * 1024 * 1024; // 10 МБ — має відповідати правилам Storage
     const Duration firestoreWriteTimeout = Duration(seconds: 20);
     const Duration uploadTimeout = Duration(seconds: 45);
     const Duration downloadUrlTimeout = Duration(seconds: 20);
@@ -164,8 +163,8 @@ class AuctionRepository {
       String? base64Image;
       String imageUrl = '';
 
-      // On web, prefer Firestore base64 to avoid Storage+CORS/emulator issues.
-      // We compress/resize the image to fit the Firestore document limit.
+      // На web: зберігаємо зображення у Firestore як base64 — уникаємо проблем із Storage+CORS.
+      // Зображення стискається/зменшується, щоб вмістити у Firestore document limit.
       final bool useFirestoreImageOnWeb = kIsWeb;
       if (bytes.isNotEmpty) {
         if (bytes.lengthInBytes <= maxImageBytes) {
@@ -180,8 +179,8 @@ class AuctionRepository {
         }
       }
 
-      // 1) Create the Firestore doc FIRST.
-      // This is required because Storage rules validate sellerId via Firestore document.
+      // 1) Створюємо документ Firestore ПЕРШИМ.
+      // Це необхідно, бо правила Storage перевіряють sellerId через документ Firestore.
       final auction = AuctionEntity(
         id: auctionId,
         title: title,
@@ -213,7 +212,7 @@ class AuctionRepository {
           )
           .timeout(firestoreWriteTimeout);
 
-      // 2) If image is too large for Firestore, upload to Storage and update the doc.
+      // 2) Якщо зображення завелике для Firestore — завантажуємо до Storage та оновлюємо документ.
       if (bytes.isNotEmpty && bytes.lengthInBytes > maxImageBytes && !useFirestoreImageOnWeb) {
         if (bytes.lengthInBytes >= maxStorageBytes) {
           throw Exception('Зображення завелике (>${maxStorageBytes ~/ (1024 * 1024)}MB). Оберіть файл до 10MB.');
@@ -231,8 +230,8 @@ class AuctionRepository {
           SettableMetadata(contentType: contentType),
         );
 
-        // Prevent "infinite loading" on web due to network/CORS issues.
-        // If it times out, cancel the task so it doesn't continue uploading in background.
+        // Запобігаємо «нескінченному завантаженню» на web через мережу/CORS проблеми.
+        // При таймауті — скасовуємо задачу, щоб вона не завантажувалась у фоні.
         try {
           await uploadTask.timeout(
             uploadTimeout,
@@ -258,7 +257,7 @@ class AuctionRepository {
         }).timeout(firestoreWriteTimeout);
       }
     } on TimeoutException catch (e) {
-      // Best-effort rollback to avoid creating "ghost" auctions.
+      // Спроба відкату при таймауті — видаляємо документ, щоб уникнути «примарних» лотів.
       try {
         mark('rollbackDelete');
         await docRef.delete().timeout(const Duration(seconds: 10));
@@ -301,7 +300,7 @@ class AuctionRepository {
         snapshot.docs.map((d) => AuctionEntity.fromDocument(d)).toList();
     final lastDoc = snapshot.docs.isEmpty ? null : snapshot.docs.last;
 
-    // Heuristic: if we got less than limit, we likely reached the end.
+    // Евристика: якщо отримали менше за ліміт — ймовірно, досягли кінця.
     final hasMore = snapshot.docs.length == limit;
 
     return AuctionPage(items: items, lastDoc: lastDoc, hasMore: hasMore);
@@ -346,11 +345,11 @@ class AuctionRepository {
 
       final bidCount = (data['bidCount'] as int?) ?? 0;
       if (bidCount > 0) {
-        // Keep rules simple and safe: after bids start, restrict changing end date / buyout.
+        // Якщо вже є ставки — дозволяємо редагувати лише назву та опис.
         if (buyoutPrice != null) {
           throw Exception('Неможливо змінити ціну викупу після появи ставок.');
         }
-        // We still allow editing title/description.
+        // Редагування назви/опису все одно дозволено.
         transaction.update(auctionRef, {
           'title': title.trim(),
           'description': description.trim(),
@@ -530,7 +529,7 @@ class AuctionRepository {
         throw FirebaseException(
             plugin: 'firestore',
             code: 'not-found',
-            message: 'Auction not found');
+            message: 'Лот не знайдено.');
       }
 
       final sellerId = (data['sellerId'] as String?) ?? '';
@@ -538,7 +537,7 @@ class AuctionRepository {
         throw FirebaseException(
           plugin: 'firestore',
           code: 'failed-precondition',
-          message: 'Seller cannot buy out own auction.',
+          message: 'Продавець не може викупити власний лот.',
         );
       }
 
@@ -548,7 +547,7 @@ class AuctionRepository {
         throw FirebaseException(
           plugin: 'firestore',
           code: 'failed-precondition',
-          message: 'Auction is not active.',
+          message: 'Аукціон не активний.',
         );
       }
 
@@ -561,7 +560,7 @@ class AuctionRepository {
           throw FirebaseException(
             plugin: 'firestore',
             code: 'failed-precondition',
-            message: 'Auction has already ended.',
+            message: 'Аукціон вже завершено.',
           );
         }
       }
@@ -571,7 +570,7 @@ class AuctionRepository {
         throw FirebaseException(
           plugin: 'firestore',
           code: 'failed-precondition',
-          message: 'Buyout is not available.',
+          message: 'Ціна викупу недоступна.',
         );
       }
 
@@ -614,8 +613,8 @@ class AuctionRepository {
   }) async {
     final auctionRef = _firestore.collection('auctions').doc(auctionId);
 
-    // Allow deletion even if bids exist.
-    // Firestore does not automatically delete subcollections, so remove bids first.
+    // Дозволяємо видалення навіть якщо є ставки.
+    // Firestore не видаляє підколекції автоматично — спочатку видаляємо ставки.
     final snapshot = await auctionRef.get();
     final data = snapshot.data();
     if (data == null) {

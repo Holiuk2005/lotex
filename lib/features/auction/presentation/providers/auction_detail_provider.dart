@@ -10,7 +10,7 @@ final auctionDetailProvider = StreamProvider.autoDispose.family<AuctionEntity, S
       throw FirebaseException(
         plugin: 'firestore',
         code: 'not-found',
-        message: 'Auction not found',
+        message: 'Лот не знайдено.',
       );
     }
     return AuctionEntity.fromDocument(doc);

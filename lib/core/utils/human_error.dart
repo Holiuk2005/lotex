@@ -3,15 +3,15 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 String humanError(Object error) {
-  // Flutter web may wrap async exceptions into an AsyncError that prints:
+  // Flutter web може загортати async-винятки в AsyncError з повідомленням:
   // "Dart exception thrown from converted Future...".
   if (error is AsyncError) {
     return humanError(error.error);
   }
 
-  // On Flutter web, some async failures surface as objects whose `toString()` is:
+  // На Flutter web деякі async-помилки виникають як об'єкти, чий `toString()` є:
   // "Error: Dart exception thrown from converted Future...".
-  // Those objects typically expose the real error via the `error` property.
+  // Ці об'єкти зазвичай містять реальну помилку у властивості `error`.
   try {
     final dynamic dyn = error;
     final Object? inner = dyn.error as Object?;
@@ -19,7 +19,7 @@ String humanError(Object error) {
       return humanError(inner);
     }
   } catch (_) {
-    // Ignore if `error` property does not exist.
+    // Ігноруємо, якщо властивість `error` не існує.
   }
 
   if (error is FirebaseException) {
@@ -37,7 +37,7 @@ String humanError(Object error) {
     text = text.substring('Error: '.length);
   }
 
-  // If we still ended up here with the web wrapper message, show a cleaner fallback.
+  // Якщо дійшли сюди з web-wrapper повідомленням — показуємо чистий fallback.
   if (text.contains('Dart exception thrown from converted Future')) {
     return 'Невідома помилка. Спробуйте перезавантажити сторінку та повторити дію.';
   }
