@@ -16,6 +16,8 @@ import 'package:lotex/features/notifications/presentation/providers/notification
 import 'package:lotex/features/home/models/filter_state.dart';
 import 'package:lotex/features/home/widgets/filter_bottom_sheet.dart';
 import 'package:lotex/services/category_seed_service.dart';
+import 'package:lotex/features/marketplace/domain/entities/marketplace_item_entity.dart';
+import 'package:lotex/features/marketplace/presentation/widgets/marketplace_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -27,6 +29,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _filter = 'live';
   FilterState _filters = const FilterState();
+  bool _showMarketplace = false;
 
   // Мемоізація Firestore query: перестворюємось лише при зміні фільтрів.
   // StreamBuilder при зміні stream пере-підписується — це зайвий читання Firestore.
@@ -110,6 +113,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return q;
   }
 
+  Query<Map<String, dynamic>> getMarketplaceQuery() {
+    Query<Map<String, dynamic>> q = FirebaseFirestore.instance.collection('marketplace_items')
+      .where('status', isEqualTo: 'active');
+
+    final categoryIds = _effectiveCategoryIds();
+    if (categoryIds.isNotEmpty) {
+      final ids = categoryIds.take(10).toList(growable: false);
+      if (ids.length == 1) {
+        q = q.where('category', isEqualTo: ids.first);
+      } else {
+        q = q.where('category', whereIn: ids);
+      }
+    }
+    
+    final hasPriceFilter = _filters.priceRange.start > _minPrice || _filters.priceRange.end < _maxPrice;
+    if (hasPriceFilter) {
+      q = q
+          .where('price', isGreaterThanOrEqualTo: _filters.priceRange.start)
+          .where('price', isLessThanOrEqualTo: _filters.priceRange.end);
+    }
+
+    q = q.orderBy('price').orderBy('createdAt', descending: true);
+    return q;
+  }
+
   String? _selectedCategoryLabel(LotexLanguage lang) {
     final ids = _effectiveCategoryIds();
     if (ids.isEmpty) return null;
@@ -168,8 +196,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               const _HeroBlock(),
               const SizedBox(height: 18),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _showMarketplace = false),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: !_showMarketplace ? LotexUiColors.violet500 : Colors.white.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text('Аукціони', style: TextStyle(color: !_showMarketplace ? Colors.white : Colors.white70, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _showMarketplace = true),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: _showMarketplace ? LotexUiColors.violet500 : Colors.white.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text('Маркетплейс', style: TextStyle(color: _showMarketplace ? Colors.white : Colors.white70, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                stream: getFilteredQuery().snapshots(),
+                stream: _showMarketplace ? getMarketplaceQuery().snapshots() : getFilteredQuery().snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return Padding(
@@ -236,57 +300,173 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                   );
 
-                  final content = filteredByTime.isEmpty
-                      ? Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 48),
-                          child: Text(
-                            LotexI18n.tr(lang, 'noAuctionsFound'),
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: LotexUiColors.slate400),
-                            textAlign: TextAlign.center,
-                          ),
-                        )
-                      : (crossAxisCount == 1
-                          ? ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: filteredByTime.length,
-                              separatorBuilder: (_, __) => const SizedBox(height: 16),
-                              itemBuilder: (context, index) {
-                                final auction = filteredByTime[index];
-                                return RepaintBoundary(
-                                  child: AuctionCard(
-                                    auction: auction,
-                                    onTap: () => context.push('/auction', extra: auction),
-                                  ),
-                                );
-                              },
-                            )
-                          : GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: crossAxisCount,
-                                mainAxisSpacing: 16,
-                                crossAxisSpacing: 16,
-                                childAspectRatio: crossAxisCount == 2 ? 0.58 : 0.55,
-                              ),
-                              itemCount: filteredByTime.length,
-                              itemBuilder: (context, index) {
-                                final auction = filteredByTime[index];
-                                return RepaintBoundary(
-                                  child: AuctionCard(
-                                    auction: auction,
-                                    onTap: () => context.push('/auction', extra: auction),
-                                  ),
-                                );
-                              },
-                            ));
+                  Widget content;
+                  
+                  if (_showMarketplace) {
+                    final pList = snapshot.data!.docs
+                        .map((d) => MarketplaceItemEntity.fromDocument(d))
+                        .toList(growable: false);
+                    
+                    if (pList.isEmpty) {
+                      content = Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 48),
+                        child: Text(
+                          'Товарів не знайдено',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: LotexUiColors.slate400),
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    } else {
+                      content = crossAxisCount == 1
+                        ? ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: pList.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 16),
+                            itemBuilder: (context, index) {
+                              final item = pList[index];
+                              return RepaintBoundary(
+                                child: MarketplaceCard(
+                                  item: item,
+                                  onTap: () => context.push('/marketplace/${item.id}'),
+                                ),
+                              );
+                            },
+                          )
+                        : GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: crossAxisCount,
+                              mainAxisSpacing: 16,
+                              crossAxisSpacing: 16,
+                              childAspectRatio: crossAxisCount == 2 ? 0.6 : 0.55,
+                            ),
+                            itemCount: pList.length,
+                            itemBuilder: (context, index) {
+                              final item = pList[index];
+                              return RepaintBoundary(
+                                child: MarketplaceCard(
+                                  item: item,
+                                  onTap: () => context.push('/marketplace/${item.id}'),
+                                ),
+                              );
+                            },
+                          );
+                    }
+                  } else {
+                    content = filteredByTime.isEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 48),
+                            child: Text(
+                              LotexI18n.tr(lang, 'noAuctionsFound'),
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: LotexUiColors.slate400),
+                              textAlign: TextAlign.center,
+                            ),
+                          )
+                        : (crossAxisCount == 1
+                            ? ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: filteredByTime.length,
+                                separatorBuilder: (_, __) => const SizedBox(height: 16),
+                                itemBuilder: (context, index) {
+                                  final auction = filteredByTime[index];
+                                  return RepaintBoundary(
+                                    child: AuctionCard(
+                                      auction: auction,
+                                      onTap: () => context.push('/auction', extra: auction),
+                                    ),
+                                  );
+                                },
+                              )
+                            : GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: crossAxisCount,
+                                  mainAxisSpacing: 16,
+                                  crossAxisSpacing: 16,
+                                  childAspectRatio: crossAxisCount == 2 ? 0.58 : 0.55,
+                                ),
+                                itemCount: filteredByTime.length,
+                                itemBuilder: (context, index) {
+                                  final auction = filteredByTime[index];
+                                  return RepaintBoundary(
+                                    child: AuctionCard(
+                                      auction: auction,
+                                      onTap: () => context.push('/auction', extra: auction),
+                                    ),
+                                  );
+                                },
+                              ));
+                  }
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      filterRow,
-                      const SizedBox(height: 16),
+                      if (!_showMarketplace) ...[
+                        filterRow,
+                        const SizedBox(height: 16),
+                      ] else ...[
+                        Row(
+                          children: [
+                            InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: _openFilterSheet,
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.05),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.white.withOpacity(0.10)),
+                                ),
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    const Center(
+                                      child: Icon(Icons.tune, color: LotexUiColors.slate400, size: 20),
+                                    ),
+                                    if (categoryLabel != null)
+                                      Positioned(
+                                        right: -2,
+                                        top: -2,
+                                        child: Container(
+                                          width: 10,
+                                          height: 10,
+                                          decoration: BoxDecoration(
+                                            color: LotexUiColors.violet500,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: LotexUiColors.slate950, width: 2),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            if (categoryLabel != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  categoryLabel,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                    color: LotexUiColors.slate950,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                       content,
                     ],
                   );

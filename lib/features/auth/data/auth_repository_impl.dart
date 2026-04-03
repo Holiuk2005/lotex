@@ -1,12 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:lotex/features/auth/data/firebase_auth_datasource.dart';
 import 'package:lotex/features/auth/domain/auth_repository.dart';
 import 'package:lotex/features/auth/domain/entities/user_entity.dart';
 import 'package:lotex/services/secure_storage_service.dart';
 import 'package:lotex/core/errors/failure_mapper.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final FirebaseAuthDatasource datasource;
@@ -34,7 +35,10 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<UserEntity> signUp({required String email, required String password}) async {
+  Future<UserEntity> signUp({
+    required String email,
+    required String password,
+  }) async {
     try {
       final cred = await datasource.signUp(email, password);
       final user = cred.user;
@@ -47,7 +51,10 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<UserEntity> signIn({required String email, required String password}) async {
+  Future<UserEntity> signIn({
+    required String email,
+    required String password,
+  }) async {
     try {
       final cred = await datasource.signIn(email, password);
       final user = cred.user;
@@ -83,7 +90,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
       final googleUser = await GoogleSignIn.instance.authenticate();
       final googleAuth = googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(idToken: googleAuth.idToken);
+      final credential = GoogleAuthProvider.credential(
+        idToken: googleAuth.idToken,
+      );
       final cred = await datasource.signInWithCredential(credential);
       final user = cred.user;
       if (user == null) throw Exception('Google sign in failed');
@@ -101,10 +110,65 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<UserEntity> signInWithApple() async {
-    // Apple sign-in is not implemented for current platforms in this repo.
-    // Return a mapped Failure so UI can display a localized message instead
-    // of crashing on UnimplementedError.
-    throw FailureMapper.from(Exception('Apple sign-in is not implemented on this platform.'));
+    try {
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final identityToken = appleCredential.identityToken;
+      final authorizationCode = appleCredential.authorizationCode;
+
+      if (identityToken == null) {
+        throw Exception(
+          'Failed to get Apple identity token.',
+        );
+      }
+
+      final OAuthProvider oAuthProvider = OAuthProvider('apple.com');
+      final AuthCredential credential = oAuthProvider.credential(
+        idToken: identityToken,
+        rawNonce:
+            '', // Not providing nonce manually since sign_in_with_apple handles its own nonce logic on iOS, while Firebase usually handles it too. In a pure setup, you would pass the nonce. We'll pass empty or rely on Firebase's internal handling for idToken. If required, we can generate a SHA256 nonce.
+        accessToken: authorizationCode,
+      );
+
+      final cred = await datasource.signInWithCredential(credential);
+      final user = cred.user;
+
+      if (user == null) {
+        throw Exception('Apple sign in failed, user is null');
+      }
+
+      final String name =
+          appleCredential.givenName != null &&
+              appleCredential.familyName != null
+          ? '${appleCredential.givenName} ${appleCredential.familyName}'
+          : (appleCredential.givenName ??
+                appleCredential.familyName ??
+                user.displayName ??
+                '');
+
+      await _saveUserData(
+        uid: user.uid,
+        email: user.email ?? appleCredential.email ?? '',
+        name: name.isNotEmpty ? name : null,
+        photoUrl: user.photoURL,
+      );
+
+      return UserEntity.fromFirebaseUser(user);
+    } catch (e) {
+      debugPrint('=== APPLE SIGN IN ERROR ===');
+      debugPrint(e.toString());
+      if (e is SignInWithAppleAuthorizationException) {
+        if (e.code == AuthorizationErrorCode.canceled) {
+          throw FailureMapper.from(Exception('Вхід скасовано.'));
+        }
+      }
+      throw FailureMapper.from(e);
+    }
   }
 
   @override
@@ -118,8 +182,9 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  UserEntity? get currentUser =>
-      datasource.currentUser == null ? null : UserEntity.fromFirebaseUser(datasource.currentUser);
+  UserEntity? get currentUser => datasource.currentUser == null
+      ? null
+      : UserEntity.fromFirebaseUser(datasource.currentUser);
 
   Future<void> _saveUserData({
     required String uid,

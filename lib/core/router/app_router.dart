@@ -20,6 +20,9 @@ import '../../features/main_wrapper/main_wrapper.dart';
 import '../../features/favorites/presentation/pages/favorites_screen.dart';
 import '../../features/chat/presentation/pages/chat_screen.dart';
 import '../../features/home/home_screen.dart';
+import '../../features/marketplace/presentation/pages/create_marketplace_item_screen.dart';
+import '../../features/marketplace/presentation/pages/marketplace_item_details_screen.dart';
+import '../../features/marketplace/presentation/providers/marketplace_providers.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'rootNavigator');
@@ -117,6 +120,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/auction',
         parentNavigatorKey: rootNavigatorKey,
+        redirect: (context, state) {
+          if (state.extra is! AuctionEntity) return '/home';
+          return null;
+        },
         builder: (context, state) {
           final auction = state.extra as AuctionEntity;
           return AuctionDetailsScreen(auction: auction);
@@ -142,6 +149,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/auction/edit',
         parentNavigatorKey: rootNavigatorKey,
+        redirect: (context, state) {
+          if (state.extra is! AuctionEntity) return '/home';
+          return null;
+        },
         builder: (context, state) {
           final auction = state.extra as AuctionEntity;
           return EditAuctionScreen(auction: auction);
@@ -202,6 +213,26 @@ final routerProvider = Provider<GoRouter>((ref) {
           return PublicProfileScreen(uid: id);
         },
       ),
+
+      GoRoute(
+        path: '/marketplace/create',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => const CreateMarketplaceItemScreen(),
+      ),
+
+      GoRoute(
+        path: '/marketplace/:id',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          if (id.isEmpty) {
+            return const Scaffold(
+              body: Center(child: Text('Товар не знайдено')),
+            );
+          }
+          return _MarketplaceDetailLoader(itemId: id);
+        },
+      ),
     ],
   );
 
@@ -229,6 +260,28 @@ class _AuctionDetailLoader extends ConsumerWidget {
         return Scaffold(body: Center(child: Text(msg)));
       },
       data: (auction) => AuctionDetailsScreen(auction: auction),
+    );
+  }
+}
+
+class _MarketplaceDetailLoader extends ConsumerWidget {
+  final String itemId;
+  const _MarketplaceDetailLoader({required this.itemId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final itemAsync = ref.watch(marketplaceDetailProvider(itemId));
+    return itemAsync.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) {
+        final msg = e.toString().contains('permission-denied')
+            ? 'У вас немає доступу до цього товару.'
+            : 'Помилка завантаження: $e';
+        return Scaffold(body: Center(child: Text(msg)));
+      },
+      data: (item) => MarketplaceItemDetailsScreen(item: item),
     );
   }
 }

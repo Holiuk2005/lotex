@@ -127,16 +127,18 @@ class _LotexBootstrapState extends State<LotexBootstrap> {
         if (snapshot.hasError) {
           child = MaterialApp(
             debugShowCheckedModeBanner: false,
-            theme: AppTheme.light(),
+            theme: AppTheme.dark(),
             darkTheme: AppTheme.dark(),
+            themeMode: ThemeMode.dark,
             home: _StartupErrorScreen(error: snapshot.error),
           );
         } else if (snapshot.connectionState != ConnectionState.done) {
           // На web вже є HTML-сплеш; тут показуємо мінімальний лоадер для нативних платформ.
           child = MaterialApp(
             debugShowCheckedModeBanner: false,
-            theme: AppTheme.light(),
+            theme: AppTheme.dark(),
             darkTheme: AppTheme.dark(),
+            themeMode: ThemeMode.dark,
             home: const LotexAppLoadingScreen(),
           );
         } else {
@@ -448,9 +450,9 @@ class MyApp extends ConsumerWidget {
         return MaterialApp.router(
           title: 'Lotex',
           debugShowCheckedModeBanner: false,
-          theme: AppTheme.light(),
+          theme: AppTheme.dark(),
           darkTheme: AppTheme.dark(),
-          themeMode: mode,
+          themeMode: ThemeMode.dark,
           routerConfig: router,
           locale: locale,
           builder: (context, child) {

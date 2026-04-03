@@ -12,7 +12,7 @@ class TelegramWebApp {}
 extension TelegramWebAppExt on TelegramWebApp {
   external String get colorScheme;
   external void setThemeParams(JSAny? params);
-  external void onEvent(String event, void Function(JSAny?) cb);
+  external void onEvent(String event, JSFunction cb);
 }
 
 /// Safe accessor - returns null when not present

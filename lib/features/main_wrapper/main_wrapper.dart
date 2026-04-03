@@ -6,6 +6,8 @@ import 'package:lotex/core/widgets/lotex_bottom_nav.dart';
 import 'package:lotex/core/widgets/lotex_sidebar.dart';
 import 'package:lotex/core/theme/lotex_ui_tokens.dart';
 import 'package:lotex/features/auction/presentation/providers/create_submit_provider.dart';
+import 'package:lotex/core/i18n/language_provider.dart';
+import 'package:lotex/core/i18n/lotex_i18n.dart';
 
 class MainWrapper extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
@@ -25,6 +27,61 @@ class MainWrapper extends ConsumerWidget {
           index,
           initialLocation: index == navigationShell.currentIndex,
         );
+
+    void showSellOptions(BuildContext context, WidgetRef ref) {
+      final lang = ref.watch(lotexLanguageProvider);
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        builder: (context) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final bg = isDark
+              ? LotexUiColors.slate950.withOpacity(0.92)
+              : Theme.of(context).colorScheme.surface;
+          
+          return Container(
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              border: Border.all(color: Colors.white.withOpacity(0.08)),
+            ),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  LotexI18n.tr(lang, 'sell'),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ListTile(
+                  leading: const Icon(Icons.gavel_outlined, color: LotexUiColors.violet500, size: 28),
+                  title: Text(LotexI18n.tr(lang, 'createAuction')),
+                  subtitle: const Text('Виставити товар на аукціон зі ставками'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    goTo(2);
+                  },
+                ),
+                const Divider(height: 1, color: Colors.white10),
+                ListTile(
+                  leading: const Icon(Icons.storefront_outlined, color: LotexUiColors.blue500, size: 28),
+                  title: const Text('Створити товар на Маркетплейсі', style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Продати товар за фіксованою ціною'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/marketplace/create');
+                  },
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          );
+        },
+      );
+    }
 
     final isCreateBranch = navigationShell.currentIndex == 2;
 
@@ -46,7 +103,7 @@ class MainWrapper extends ConsumerWidget {
               if (isCreateBranch && submitCallback != null) {
                 submitCallback();
               } else {
-                goTo(2);
+                showSellOptions(context, ref);
               }
             },
             child: Material(
