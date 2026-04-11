@@ -571,6 +571,9 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
   Widget _buildGallery() {
     final lang = ref.watch(lotexLanguageProvider);
     final imageProvider = _auctionImageProvider();
+    final nowUtc = DateTime.now().toUtc();
+    final isFinished = nowUtc.isAfter(auction.endDate.toUtc());
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

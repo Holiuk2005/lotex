@@ -98,12 +98,24 @@ class _CreateMarketplaceItemScreenState extends ConsumerState<CreateMarketplaceI
   }
 
   void _submit() {
+    if (_pickedImage == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Вам необхідно додати фото')),
+      );
+      return;
+    }
+    
     if (_formKey.currentState!.validate()) {
-      if (_pickedImage == null) return;
-      
       final typeId = (_selectedTypeId ?? '').trim();
       final subtypes = _selectedSubtypeIds.toList(growable: false);
-      if (typeId.isEmpty || subtypes.isEmpty) return;
+      if (typeId.isEmpty || subtypes.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Оберіть категорію та підкатегорію')),
+        );
+        return;
+      }
 
       final category = subtypes.first;
       final price = double.parse(_priceController.text.replaceAll(',', '.'));
@@ -117,19 +129,6 @@ class _CreateMarketplaceItemScreenState extends ConsumerState<CreateMarketplaceI
             image: _pickedImage!,
           );
     }
-  }
-
-  bool _canSubmit() {
-    final isLoading = ref.watch(createMarketplaceItemControllerProvider).isLoading;
-    if (isLoading) return false;
-    if (_pickedImage == null) return false;
-    if ((_selectedTypeId ?? '').trim().isEmpty) return false;
-    if (_selectedSubtypeIds.isEmpty) return false;
-    if (_titleController.text.trim().isEmpty) return false;
-    if (_descController.text.trim().isEmpty) return false;
-    final price = double.tryParse(_priceController.text.replaceAll(',', '.'));
-    if (price == null || price <= 0) return false;
-    return true;
   }
 
   @override
@@ -229,12 +228,9 @@ class _CreateMarketplaceItemScreenState extends ConsumerState<CreateMarketplaceI
       ),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.all(16),
-        child: AnimatedBuilder(
-          animation: Listenable.merge([_titleController, _descController, _priceController]),
-          builder: (context, _) => AppButton.primary(
-            label: isLoading ? 'Створення...' : 'Виставити на продаж',
-            onPressed: _canSubmit() ? _submit : null,
-          ),
+        child: AppButton.primary(
+          label: isLoading ? 'Створення...' : 'Виставити на продаж',
+          onPressed: isLoading ? null : _submit,
         ),
       ),
     );
