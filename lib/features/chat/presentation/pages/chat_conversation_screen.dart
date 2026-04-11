@@ -41,7 +41,7 @@ class ConversationView extends ConsumerWidget {
     final lang = ref.watch(lotexLanguageProvider);
     final authUser = ref.watch(authStateChangesProvider).maybeWhen(data: (u) => u, orElse: () => null);
     final myUid = authUser?.uid;
-    final msgs = ref.watch(conversationMessagesProvider({'dialogId': dialogId, 'role': role}));
+    final msgs = ref.watch(conversationMessagesProvider('$dialogId||$role'));
 
     final content = Column(
       children: [

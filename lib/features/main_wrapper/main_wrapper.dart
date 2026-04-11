@@ -36,14 +36,14 @@ class MainWrapper extends ConsumerWidget {
         builder: (context) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           final bg = isDark
-              ? LotexUiColors.slate950.withOpacity(0.92)
+              ? LotexUiColors.slate950.withValues(alpha: 0.92)
               : Theme.of(context).colorScheme.surface;
           
           return Container(
             decoration: BoxDecoration(
               color: bg,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              border: Border.all(color: Colors.white.withOpacity(0.08)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             ),
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -140,7 +140,13 @@ class MainWrapper extends ConsumerWidget {
               children: [
                 LotexSidebar(
                   currentIndex: navigationShell.currentIndex,
-                  onSelect: goTo,
+                  onSelect: (index) {
+                    if (index == 2) {
+                      showSellOptions(context, ref);
+                    } else {
+                      goTo(index);
+                    }
+                  },
                 ),
                 Expanded(child: navigationShell),
               ],

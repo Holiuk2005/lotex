@@ -178,7 +178,7 @@ class LotexSidebar extends ConsumerWidget {
                           navItem(
                               index: 0,
                               icon: Icons.home_outlined,
-                              label: LotexI18n.tr(lang, 'marketplace')),
+                              label: LotexI18n.tr(lang, 'home')),
                           const SizedBox(height: 8),
                           navItem(
                               index: 1,
@@ -188,7 +188,7 @@ class LotexSidebar extends ConsumerWidget {
                           navItem(
                               index: 2,
                               icon: Icons.add,
-                              label: LotexI18n.tr(lang, 'sellItem')),
+                              label: LotexI18n.tr(lang, 'sell')),
                           const SizedBox(height: 8),
                           navItem(
                               index: 3,

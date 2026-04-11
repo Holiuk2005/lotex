@@ -60,10 +60,31 @@ class MarketplaceRepository {
   }
 
   Future<void> buyItem({required String itemId, required String buyerId}) async {
-    await _db.collection('marketplace_items').doc(itemId).update({
-      'status': 'sold',
-      'winnerId': buyerId,
-      'updatedAt': FieldValue.serverTimestamp(),
+    final docRef = _db.collection('marketplace_items').doc(itemId);
+
+    await _db.runTransaction((transaction) async {
+      final snap = await transaction.get(docRef);
+      final data = snap.data();
+
+      if (data == null) {
+        throw Exception('Товар не знайдено.');
+      }
+
+      final status = (data['status'] as String?) ?? 'active';
+      if (status != 'active') {
+        throw Exception('Цей товар вже продано або недоступний.');
+      }
+
+      final sellerId = (data['sellerId'] as String?) ?? '';
+      if (sellerId.isNotEmpty && sellerId == buyerId) {
+        throw Exception('Продавець не може купити власний товар.');
+      }
+
+      transaction.update(docRef, {
+        'status': 'sold',
+        'winnerId': buyerId,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
     });
   }
 }

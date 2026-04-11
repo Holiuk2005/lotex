@@ -206,7 +206,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
-                            color: !_showMarketplace ? LotexUiColors.violet500 : Colors.white.withOpacity(0.05),
+                            color: !_showMarketplace ? LotexUiColors.violet500 : Colors.white.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           alignment: Alignment.center,
@@ -221,7 +221,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
-                            color: _showMarketplace ? LotexUiColors.violet500 : Colors.white.withOpacity(0.05),
+                            color: _showMarketplace ? LotexUiColors.violet500 : Colors.white.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           alignment: Alignment.center,
@@ -254,9 +254,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     );
                   }
 
-                  final list = snapshot.data!.docs
-                      .map((d) => AuctionEntity.fromDocument(d))
-                      .toList(growable: false);
+                  // Маркетплейс-документи парсимо окремо, щоб не застосовувати
+                  // аукціонний fromDocument до несумісних полів.
+                  final List<AuctionEntity> list;
+                  final List<MarketplaceItemEntity> pListEarly;
+                  if (_showMarketplace) {
+                    list = const [];
+                    pListEarly = snapshot.data!.docs
+                        .map((d) => MarketplaceItemEntity.fromDocument(d))
+                        .toList(growable: false);
+                  } else {
+                    list = snapshot.data!.docs
+                        .map((d) => AuctionEntity.fromDocument(d))
+                        .toList(growable: false);
+                    pListEarly = const [];
+                  }
 
                   final now = DateTime.now();
                   final filteredByTime = switch (_filter) {
@@ -303,9 +315,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Widget content;
                   
                   if (_showMarketplace) {
-                    final pList = snapshot.data!.docs
-                        .map((d) => MarketplaceItemEntity.fromDocument(d))
-                        .toList(growable: false);
+                    final pList = pListEarly;
                     
                     if (pList.isEmpty) {
                       content = Padding(
@@ -418,9 +428,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 width: 40,
                                 height: 40,
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.05),
+                                  color: Colors.white.withValues(alpha: 0.05),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.white.withOpacity(0.10)),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
                                 ),
                                 child: Stack(
                                   clipBehavior: Clip.none,

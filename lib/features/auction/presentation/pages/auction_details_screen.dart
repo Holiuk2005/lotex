@@ -223,11 +223,11 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
   Future<void> _confirmBuyout() async {
     final user = ref.read(currentUserProvider);
     if (user == null) {
+      if (!mounted) return;
       final lang = ref.read(lotexLanguageProvider);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(LotexI18n.tr(lang, 'authRequired'))),
       );
-      if (!mounted) return;
       context.push('/login');
       return;
     }
@@ -594,7 +594,7 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
                 Positioned(
                   left: 16,
                   top: 16,
-                  child: _LiveBadge(lang: lang),
+                  child: isFinished ? const SizedBox.shrink() : _LiveBadge(lang: lang),
                 ),
               ],
             ),
@@ -821,7 +821,7 @@ class _AuctionDetailsScreenState extends ConsumerState<AuctionDetailsScreen> {
               );
             },
           ),
-          onPlaceBid: _showBidSheet,
+          onPlaceBid: isFinished ? null : _showBidSheet,
           buyoutLabel: showBuyout ? '${LotexI18n.tr(lang, 'buyoutAction')} • ${_formatMoney(lang, buyout)}' : null,
           onBuyout: showBuyout ? _confirmBuyout : null,
           lang: lang,
@@ -1070,7 +1070,7 @@ class _Badge extends StatelessWidget {
 class _BidCard extends StatelessWidget {
   final String currentPriceText;
   final Widget endsInWidget;
-  final VoidCallback onPlaceBid;
+  final VoidCallback? onPlaceBid;
   final String? buyoutLabel;
   final VoidCallback? onBuyout;
   final LotexLanguage lang;
@@ -1140,12 +1140,13 @@ class _BidCard extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             children: [
-              Expanded(
-                child: _GradientCta(
-                  label: LotexI18n.tr(lang, 'placeBid'),
-                  onTap: onPlaceBid,
+              if (onPlaceBid != null)
+                Expanded(
+                  child: _GradientCta(
+                    label: LotexI18n.tr(lang, 'placeBid'),
+                    onTap: onPlaceBid!,
+                  ),
                 ),
-              ),
               if (buyoutLabel != null && onBuyout != null) ...[
                 const SizedBox(width: 12),
                 Expanded(

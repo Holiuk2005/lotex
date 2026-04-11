@@ -46,7 +46,7 @@ class MarketplaceCard extends StatelessWidget {
                   ),
                   if (item.status == 'sold')
                     Container(
-                      color: Colors.black.withOpacity(0.5),
+                      color: Colors.black.withValues(alpha: 0.5),
                       child: const Center(
                         child: Text('ПРОДАНО', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
                       ),

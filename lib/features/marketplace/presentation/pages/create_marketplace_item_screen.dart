@@ -31,7 +31,7 @@ class _CreateMarketplaceItemScreenState extends ConsumerState<CreateMarketplaceI
 
   String? _selectedTypeId;
   Set<String> _selectedSubtypeIds = <String>{};
-  String _currency = LotexCurrency.uah;
+  final String _currency = LotexCurrency.uah;
   XFile? _pickedImage;
 
   late final ProviderSubscription<AsyncValue<void>> _createSub;

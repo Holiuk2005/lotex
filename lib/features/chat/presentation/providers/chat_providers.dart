@@ -32,10 +32,11 @@ final buyerDialogsProvider = StreamProvider.autoDispose<List<ChatDialog>>((ref) 
   return repo.dialogsStream(role: 'buyer', userId: uid);
 });
 
-final conversationMessagesProvider = StreamProvider.autoDispose.family<List<ChatMessage>, Map<String, String?>>((ref, params) {
+final conversationMessagesProvider = StreamProvider.autoDispose.family<List<ChatMessage>, String>((ref, params) {
   final repo = ref.watch(chatRepositoryProvider);
-  final role = params['role'] ?? 'buyer';
-  final dialogId = params['dialogId'];
+  final parts = params.split('||');
+  final dialogId = parts[0];
+  final role = parts.length > 1 ? parts[1] : 'buyer';
   return repo.messagesStream(dialogId: dialogId, role: role);
 });
 

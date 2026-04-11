@@ -158,7 +158,11 @@ class _ShippingScreenState extends ConsumerState<ShippingScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(LotexI18n.tr(lang, 'shippingSaved'))),
         );
-        context.pop();
+        if (Navigator.of(context).canPop()) {
+          context.pop();
+        } else {
+          context.go('/home');
+        }
       }
     } catch (e) {
       if (!mounted) return;

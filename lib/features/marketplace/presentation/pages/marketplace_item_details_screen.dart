@@ -6,6 +6,7 @@ import '../../domain/entities/marketplace_item_entity.dart';
 import '../../../../core/widgets/lotex_app_bar.dart';
 import '../../../../core/widgets/lotex_background.dart';
 import '../../../../core/theme/lotex_ui_tokens.dart';
+import '../../../../core/utils/human_error.dart';
 import '../../../../features/auth/presentation/providers/auth_state_provider.dart';
 import '../providers/marketplace_providers.dart';
 import '../../../../core/widgets/app_button.dart';
@@ -49,13 +50,16 @@ class _MarketplaceItemDetailsScreenState extends ConsumerState<MarketplaceItemDe
         buyerId: user.uid,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Покупка успішна! Очікуйте на доставку')));
-      
-      // Navigate to shipping checkout (mock flow) or just pop back
-      context.go('/home');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Покупку підтверджено! Заповніть дані доставки.')),
+      );
+      // Переходимо на екран доставки аналогічно флоу аукціону
+      context.push('/shipping/${widget.item.id}');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Помилка: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Помилка: ${humanError(e)}')),
+      );
     } finally {
       if (mounted) setState(() => _isPurchasing = false);
     }

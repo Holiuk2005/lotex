@@ -197,7 +197,8 @@ class _LotexAuctionCardV2State extends ConsumerState<LotexAuctionCardV2> {
                                   ),
                                 ),
                                 // Live badge
-                                Positioned(
+                                if (!widget.auction.endDate.isBefore(DateTime.now()))
+                                  Positioned(
                                   top: 12,
                                   right: 12,
                                   child: ClipRRect(
@@ -360,7 +361,7 @@ class _LotexAuctionCardV2State extends ConsumerState<LotexAuctionCardV2> {
                                   ),
                                 );
                               },
-                              child: showButton
+                              child: showButton && !auction.endDate.isBefore(DateTime.now())
                                   ? SizedBox(
                                       key: const ValueKey('cta'),
                                       height: 44,
