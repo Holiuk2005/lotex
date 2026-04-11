@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lotex/core/utils/human_error.dart';
 import 'package:lotex/features/auth/presentation/providers/auth_state_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:lotex/features/auction/presentation/widgets/lotex_input.dart'; // Використовуємо ваш віджет інпуту
-
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
@@ -30,6 +30,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+      
+      final name = _nameController.text.trim();
+      if (name.isNotEmpty) {
+        await FirebaseAuth.instance.currentUser?.updateDisplayName(name);
+      }
       if (!mounted) return;
       // Navigation is handled centrally by GoRouter redirect (auth -> /home)
       // to avoid double-navigation and deactivated-context issues.

@@ -17,7 +17,11 @@ Future<T?> showLotexModal<T>({
       final width = MediaQuery.sizeOf(context).width;
       final maxW = width >= 420 ? 420.0 : width - 32;
 
-      return Center(
+      return AnimatedPadding(
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        child: Center(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: BackdropFilter(
@@ -80,6 +84,7 @@ Future<T?> showLotexModal<T>({
               ),
             ),
           ),
+        ),
         ),
       );
     },

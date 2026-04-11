@@ -165,9 +165,11 @@ class _LotexAuctionCardV2State extends ConsumerState<LotexAuctionCardV2> {
                         imageHeight = math.min(idealImageHeight, maxImageHeight);
                       }
 
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
+                      return SingleChildScrollView(
+                        physics: h.isFinite ? const ClampingScrollPhysics() : const NeverScrollableScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
                           SizedBox(
                             height: imageHeight,
                             child: Stack(
@@ -313,14 +315,17 @@ class _LotexAuctionCardV2State extends ConsumerState<LotexAuctionCardV2> {
                                           const Icon(Icons.trending_up, size: 16, color: LotexUiColors.neonGreen),
                                           const SizedBox(width: 6),
                                           Expanded(
-                                            child: Text(
-                                              LotexI18n.formatCurrency(auction.currentPrice, lang),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.w700,
-                                                color: Colors.white,
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              alignment: Alignment.centerLeft,
+                                              child: Text(
+                                                LotexI18n.formatCurrency(auction.currentPrice, lang),
+                                                maxLines: 1,
+                                                style: const TextStyle(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Colors.white,
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -439,6 +444,7 @@ class _LotexAuctionCardV2State extends ConsumerState<LotexAuctionCardV2> {
                             ),
                           ),
                         ],
+                      ),
                       );
                     },
                   ),

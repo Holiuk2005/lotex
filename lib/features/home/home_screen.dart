@@ -210,7 +210,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           alignment: Alignment.center,
-                          child: Text('Аукціони', style: TextStyle(color: !_showMarketplace ? Colors.white : Colors.white70, fontWeight: FontWeight.bold)),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text('Аукціони', style: TextStyle(color: !_showMarketplace ? Colors.white : Colors.white70, fontWeight: FontWeight.bold)),
+                          ),
                         ),
                       ),
                     ),
@@ -225,7 +228,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           alignment: Alignment.center,
-                          child: Text('Маркетплейс', style: TextStyle(color: _showMarketplace ? Colors.white : Colors.white70, fontWeight: FontWeight.bold)),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text('Маркетплейс', style: TextStyle(color: _showMarketplace ? Colors.white : Colors.white70, fontWeight: FontWeight.bold)),
+                          ),
                         ),
                       ),
                     ),

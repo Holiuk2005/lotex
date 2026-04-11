@@ -197,7 +197,13 @@ class _CreateMarketplaceItemScreenState extends ConsumerState<CreateMarketplaceI
                     child: DropdownButton<String>(
                       value: _selectedTypeId,
                       isExpanded: true,
-                      items: roots.map((c) => DropdownMenuItem(value: c.id, child: Text(CategoryI18n.label(lang, c.id, fallback: c.name)))).toList(),
+                      items: roots.map((c) => DropdownMenuItem(
+                        value: c.id, 
+                        child: Text(
+                          CategoryI18n.label(lang, c.id, fallback: c.name),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      )).toList(),
                       onChanged: (v) => setState(() { _selectedTypeId = v; _selectedSubtypeIds.clear(); }),
                     ),
                   ),

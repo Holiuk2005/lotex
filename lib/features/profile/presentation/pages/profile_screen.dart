@@ -965,12 +965,15 @@ class _Tabs extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      tabs[i],
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: isActive ? Colors.white : LotexUiColors.slate500,
-                            fontWeight: FontWeight.w600,
-                          ),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        tabs[i],
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              color: isActive ? Colors.white : LotexUiColors.slate500,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
                     ),
                     const SizedBox(height: 10),
                     AnimatedContainer(
